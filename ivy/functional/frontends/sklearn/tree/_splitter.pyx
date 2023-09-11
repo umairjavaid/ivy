@@ -18,7 +18,7 @@ from libc.string cimport memcpy
 from libc.math cimport isnan
 from cython cimport final
 
-import numpy as np
+import ivy
 
 from scipy.sparse import isspmatrix_csc
 
@@ -27,7 +27,7 @@ from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 
-cdef double INFINITY = np.inf
+cdef double INFINITY = ivy.inf
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
@@ -140,7 +140,7 @@ cdef class Splitter:
 
         # Create a new array which will be used to store nonzero
         # samples from the feature of interest
-        self.samples = np.empty(n_samples, dtype=np.intp)
+        self.samples = ivy.empty(n_samples, dtype="int64")
         cdef SIZE_t[::1] samples = self.samples
 
         cdef SIZE_t i, j
@@ -163,11 +163,11 @@ cdef class Splitter:
         self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        self.features = np.arange(n_features, dtype=np.intp)
+        self.features = ivy.arange(n_features, dtype="int64")
         self.n_features = n_features
 
-        self.feature_values = np.empty(n_samples, dtype=np.float32)
-        self.constant_features = np.empty(n_features, dtype=np.intp)
+        self.feature_values = ivy.empty(n_samples, dtype="float32")
+        self.constant_features = ivy.empty(n_features, dtype="int64")
 
         self.y = y
 
@@ -1056,8 +1056,8 @@ cdef class SparsePartitioner:
         self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
-        self.index_to_samples = np.full(n_total_samples, fill_value=-1, dtype=np.intp)
-        self.sorted_samples = np.empty(n_samples, dtype=np.intp)
+        self.index_to_samples = ivy.full(n_total_samples, fill_value=-1, dtype="int64")
+        self.sorted_samples = ivy.empty(n_samples, dtype="int64")
 
         cdef SIZE_t p
         for p in range(n_samples):
