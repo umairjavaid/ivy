@@ -3,5 +3,6 @@ from ._input_containers import CommonSklearnModelContainer
 from .batch_container import BatchContainer
 from .sklearn.pytorch_containers import (
     PyTorchSklearnContainer,
-    PyTorchSklearnContainerRegression
+    PyTorchSklearnContainerRegression,
+    PyTorchSklearnContainerClassification
 )

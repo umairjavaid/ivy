@@ -2,7 +2,8 @@
 
 from .._sklearn_api_containers import (
     SklearnContainer,
-    SklearnContainerRegression
+    SklearnContainerRegression,
+    SklearnContainerClassification
 )
 
 
@@ -36,3 +37,11 @@ class PyTorchSklearnContainerRegression(SklearnContainerRegression, PyTorchSklea
             return self.model.forward(*inputs)[0].cpu().numpy().ravel()
         else:
             return self.model.forward(*inputs)[0].cpu().numpy().ravel()
+        
+class PyTorchSklearnContainerClassification(SklearnContainerClassification, PyTorchSklearnContainerRegression):
+    """
+    Container for PyTorch models mirroring Sklearn classifiers API.
+    """
+
+    def _predict_proba(self, *input):
+        return self.model.forward(*input)[1].cpu().numpy()

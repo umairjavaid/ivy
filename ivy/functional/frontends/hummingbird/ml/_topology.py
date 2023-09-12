@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from ...onnxconverter_common.topology import Topology as ONNXTopology
-from ...onnxconverter_common.registration import get_converter
+from .onnxconverter_common.topology import Topology as ONNXTopology
+from .onnxconverter_common.registration import get_converter
 from ._executor import Executor
 from .exceptions import MissingConverter
 from .operator_converters import constants

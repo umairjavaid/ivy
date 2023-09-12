@@ -42,12 +42,12 @@ def _parse_sklearn_api(topology, model, inputs):
     Returns:
         The output `onnxconverter_common.topology.Variable`s produced by the input model
     """
-    tmodel = type(model)
-    if tmodel in sklearn_api_parsers_map:
-        outputs = sklearn_api_parsers_map[tmodel](topology, model, inputs)
-    else:
-        outputs = _parse_sklearn_single_model(topology, model, inputs)
-
+    # tmodel = type(model)
+    # if tmodel in sklearn_api_parsers_map:
+    #     outputs = sklearn_api_parsers_map[tmodel](topology, model, inputs)
+    # else:
+    #     outputs = _parse_sklearn_single_model(topology, model, inputs)
+    outputs = _parse_sklearn_single_model(topology, model, inputs)
     return outputs
 
 def parse_sklearn_api_model(model, extra_config={}):
@@ -114,6 +114,25 @@ def _declare_output_variables(raw_model_container, extra_config, outputs):
     for variable in outputs:
         raw_model_container.add_output(variable)
 
+# def _build_sklearn_api_parsers_map():
+#     # Parsers for edge cases are going here.
+#     map_parser = {
+#         ColumnTransformer: _parse_sklearn_column_transformer,
+#         GridSearchCV: _parse_sklearn_model_selection,
+#         MultiOutputRegressor: _parse_sklearn_multi_output_regressor,
+#         pipeline.Pipeline: _parse_sklearn_pipeline,
+#         pipeline.FeatureUnion: _parse_sklearn_feature_union,
+#         RandomizedSearchCV: _parse_sklearn_model_selection,
+#         RegressorChain: _parse_sklearn_regressor_chain,
+#         BaggingClassifier: _parse_sklearn_bagging,
+#         BaggingRegressor: _parse_sklearn_bagging,  # This may introduce some rounding error. TODO better implementation.
+#         # More parsers will go here
+#     }
 
+#     if StackingClassifier is not None:
+#         map_parser[StackingClassifier] = _parse_sklearn_stacking
+#         map_parser[StackingRegressor] = _parse_sklearn_stacking
 
+#     return map_parser
 
+# sklearn_api_parsers_map = _build_sklearn_api_parsers_map()

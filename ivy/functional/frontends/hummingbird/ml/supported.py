@@ -1,66 +1,46 @@
+
+from collections import defaultdict
+
+from .exceptions import MissingConverter
+from ._utils import torch_installed
+
+def _build_backend_map():
+    """
+    The set of supported backends is defined here.
+    """
+    backends = defaultdict(lambda: None)
+
+    if torch_installed():
+        import torch
+
+        backends[torch.__name__] = torch.__name__
+        backends["py" + torch.__name__] = torch.__name__  # For compatibility with earlier versions.
+
+        backends[torch.jit.__name__] = torch.jit.__name__
+        backends["torchscript"] = torch.jit.__name__  # For reference outside Hummingbird.
+
+    return backends
+
+backends = _build_backend_map()
+
+
+
+
+
 def _build_sklearn_operator_list():
     """
     Put all supported Sklearn operators on a list.
     """
-    if sklearn_installed():
+    if True:
         # Tree-based models
         from sklearn.ensemble import (
-            ExtraTreesClassifier,
-            ExtraTreesRegressor,
-            GradientBoostingClassifier,
-            GradientBoostingRegressor,
-            HistGradientBoostingClassifier,
-            HistGradientBoostingRegressor,
-            IsolationForest,
             RandomForestClassifier,
             RandomForestRegressor,
         )
 
         from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-        # Linear-based models
-        from sklearn.linear_model import (
-            LinearRegression,
-            LogisticRegression,
-            LogisticRegressionCV,
-            SGDClassifier,
-            RidgeCV,
-            ElasticNet,
-            Ridge,
-            Lasso,
-            TweedieRegressor,
-            PoissonRegressor,
-            GammaRegressor,
-        )
-
-        # SVM-based models
-        from sklearn.svm import LinearSVC, SVC, NuSVC, LinearSVR
-
-        # Imputers
-        from sklearn.impute import MissingIndicator, SimpleImputer
-
-        # MLP Models
-        from sklearn.neural_network import MLPClassifier, MLPRegressor
-
-        # Naive Bayes Models
-        from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB
-
-        # Matrix decomposition transformers
-        from sklearn.decomposition import PCA, KernelPCA, FastICA, TruncatedSVD
-
-        # Cross decomposition
-        from sklearn.cross_decomposition import PLSRegression
-
-        # KNeighbors models
-        from sklearn.neighbors import KNeighborsClassifier
-        from sklearn.neighbors import KNeighborsRegressor
-
-        # Clustering models
-        from sklearn.cluster import KMeans, MeanShift
-
-        # Model selection
-        from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-
+        
         # Preprocessing
         from sklearn.preprocessing import (
             Binarizer,
@@ -91,48 +71,10 @@ def _build_sklearn_operator_list():
             # Trees
             DecisionTreeClassifier,
             DecisionTreeRegressor,
-            ExtraTreesClassifier,
-            ExtraTreesRegressor,
-            GradientBoostingClassifier,
-            GradientBoostingRegressor,
-            HistGradientBoostingClassifier,
-            HistGradientBoostingRegressor,
-            IsolationForest,
             OneHotEncoder,
             RandomForestClassifier,
             RandomForestRegressor,
-            # Linear-methods
-            LinearRegression,
-            LinearSVC,
-            LinearSVR,
-            LogisticRegression,
-            LogisticRegressionCV,
-            SGDClassifier,
-            RidgeCV,
-            Lasso,
-            ElasticNet,
-            Ridge,
-            TweedieRegressor,
-            PoissonRegressor,
-            GammaRegressor,
-            # Clustering
-            KMeans,
-            MeanShift,
-            # Other models
-            BernoulliNB,
-            GaussianNB,
-            KNeighborsClassifier,
-            KNeighborsRegressor,
-            MLPClassifier,
-            MLPRegressor,
-            MultinomialNB,
-            # SVM
-            NuSVC,
-            SVC,
-            # Imputers
-            Imputer,
-            MissingIndicator,
-            SimpleImputer,
+
             # Preprocessing
             Binarizer,
             KBinsDiscretizer,
@@ -143,13 +85,7 @@ def _build_sklearn_operator_list():
             PolynomialFeatures,
             RobustScaler,
             StandardScaler,
-            # Matrix Decomposition
-            FastICA,
-            KernelPCA,
-            PCA,
-            TruncatedSVD,
-            # Cross Decomposition
-            PLSRegression,
+
             # Feature selection
             SelectKBest,
             SelectPercentile,
@@ -182,10 +118,8 @@ def _build_sklearn_api_operator_name_map():
         k: "Sklearn" + k.__name__ if hasattr(k, "__name__") else k
         for k in sklearn_operator_list
         + pipeline_operator_list
-        + xgb_operator_list
-        + lgbm_operator_list
-        + prophet_operator_list
     }
+
 
 sklearn_api_operator_name_map = _build_sklearn_api_operator_name_map()
 
@@ -203,3 +137,21 @@ def get_sklearn_api_operator_name(model_type):
     if model_type not in sklearn_api_operator_name_map:
         raise MissingConverter("Unable to find converter for model type {}.".format(model_type))
     return sklearn_api_operator_name_map[model_type]
+
+REMAINDER_SIZE = "remainder_size"
+"""Determines the number of rows that an auxiliary remainder model can accept."""
+
+INPUT_NAMES = "input_names"
+"""Set the names of the inputs. Assume that the numbers of inputs_names is equal to the number of inputs."""
+
+OUTPUT_NAMES = "output_names"
+"""Set the names of the outputs."""
+
+CONTAINER = "container"
+"""Boolean used to chose whether to return the container for Sklearn API or just the model."""
+
+N_THREADS = "n_threads"
+"""Select how many threads to use for scoring. This parameter will set the number of intra-op threads.
+Inter-op threads are by default set to 1 in Hummingbird. Check `tests.test_extra_conf.py` for usage examples."""
+
+

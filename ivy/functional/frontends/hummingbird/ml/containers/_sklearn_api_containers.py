@@ -74,3 +74,28 @@ class SklearnContainerRegression(SklearnContainer):
         On anomaly detection (e.g. isolation forest) returns the predicted classes (-1 or 1).
         """
         return self._run(self._predict, *inputs)
+    
+
+class SklearnContainerClassification(SklearnContainerRegression):
+    """
+    Container mirroring Sklearn classifiers API.
+    """
+
+    def __init__(self, model, n_threads, batch_size, extra_config={}):
+        super(SklearnContainerClassification, self).__init__(
+            model, n_threads, batch_size, is_regression=False, extra_config=extra_config
+        )
+
+    @abstractmethod
+    def _predict_proba(self, *input):
+        """
+        This method contains container-specific implementation of predict_proba.
+        """
+        pass
+
+    def predict_proba(self, *inputs):
+        """
+        Utility functions used to emulate the behavior of the Sklearn API.
+        On classification tasks returns the probability estimates.
+        """
+        return self._run(self._predict_proba, *inputs)

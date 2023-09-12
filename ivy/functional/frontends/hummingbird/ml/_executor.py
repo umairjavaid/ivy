@@ -1,8 +1,9 @@
-import ivy.functional.frontends.torch as torch
+#import ivy.functional.frontends.torch as torch
+import torch
 from ._utils import get_device, from_strings_to_ints
-import ivy.functional.frontends.numpy as np
-
-from operator_converters import constants
+#import ivy.functional.frontends.numpy as np
+import numpy as np
+from .operator_converters import constants
 
 class Executor(torch.nn.Module, object):
     """
