@@ -5,3 +5,5 @@ from .._utils import _Constants
 
 # Add constants in scope.
 constants = _Constants(converter_constants, hummingbird_constants)
+
+from .sklearn import decision_tree

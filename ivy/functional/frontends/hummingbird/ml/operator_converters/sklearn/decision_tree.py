@@ -1,3 +1,5 @@
+from ...onnxconverter_common.registration import register_converter
+
 from .. import constants
 from .._tree_commons import get_parameters_for_sklearn_common, get_parameters_for_tree_trav_sklearn
 from .._tree_commons import convert_decision_ensemble_tree_common
@@ -58,3 +60,7 @@ def convert_sklearn_decision_tree_classifier(operator, device, extra_config):
 
     operator.raw_operator.estimators_ = [operator.raw_operator]
     return convert_sklearn_random_forest_classifier(operator, device, extra_config)
+
+
+register_converter("SklearnDecisionTreeClassifier", convert_sklearn_decision_tree_classifier)
+register_converter("SklearnExtraTreesClassifier", convert_sklearn_random_forest_classifier)
