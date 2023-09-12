@@ -1,3 +1,7 @@
+from .supported import get_sklearn_api_operator_name
+from .containers import CommonSklearnModelContainer
+from ._topology import Topology
+from .operator_converters import constants
 
 def _parse_sklearn_single_model(topology, model, inputs):
     """
@@ -83,44 +87,12 @@ def _declare_input_variables(topology, raw_model_container, extra_config):
     n_inputs = extra_config[constants.N_INPUTS] if constants.N_INPUTS in extra_config else 1
     if constants.INPUT_NAMES in extra_config:
         assert n_inputs == len(extra_config[constants.INPUT_NAMES])
-    if constants.TEST_INPUT in extra_config:
-        from onnxconverter_common.data_types import (
-            FloatTensorType,
-            DoubleTensorType,
-            Int32TensorType,
-            Int64TensorType,
-            StringTensorType,
-        )
-
-        test_input = extra_config[constants.TEST_INPUT] if n_inputs > 1 else [extra_config[constants.TEST_INPUT]]
-        for i in range(n_inputs):
-            input = test_input[i]
-            input_name = (
-                extra_config[constants.INPUT_NAMES][i] if constants.INPUT_NAMES in extra_config else "input_{}".format(i)
-            )
-            if input.dtype == np.float32:
-                input_type = FloatTensorType(input.shape)
-            elif input.dtype == np.float64:
-                input_type = DoubleTensorType(input.shape)
-            elif input.dtype == np.int32:
-                input_type = Int32TensorType(input.shape)
-            elif input.dtype == np.int64:
-                input_type = Int64TensorType(input.shape)
-            elif input.dtype.kind in constants.SUPPORTED_STRING_TYPES:
-                input_type = StringTensorType(input.shape)
-            else:
-                raise NotImplementedError(
-                    "Type {} not supported. Please fill an issue on https://github.com/microsoft/hummingbird/.".format(
-                        input.dtype
-                    )
-                )
-            inputs.append(topology.declare_logical_variable(input_name, type=input_type))
-    else:
-        # We have no information on the input. Sklearn/Spark-ML always gets as input a single dataframe,
-        # therefore by default we start with a single `input` variable
-        input_name = extra_config[constants.INPUT_NAMES][0] if constants.TEST_INPUT in extra_config else "input"
-        var = topology.declare_logical_variable(input_name)
-        inputs.append(var)
+    
+    # We have no information on the input. Sklearn/Spark-ML always gets as input a single dataframe,
+    # therefore by default we start with a single `input` variable
+    input_name = extra_config[constants.INPUT_NAMES][0] if constants.TEST_INPUT in extra_config else "input"
+    var = topology.declare_logical_variable(input_name)
+    inputs.append(var)
 
     # The object raw_model_container is a part of the topology we're going to return.
     # We use it to store the inputs of the Sklearn/Spark-ML's computational graph.
@@ -141,10 +113,6 @@ def _declare_output_variables(raw_model_container, extra_config, outputs):
     # We use it to store the outputs of the Sklearn/Spark-ML's computational graph.
     for variable in outputs:
         raw_model_container.add_output(variable)
-
-
-
-
 
 
 

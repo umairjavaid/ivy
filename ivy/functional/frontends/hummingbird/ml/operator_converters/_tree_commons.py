@@ -9,7 +9,7 @@ Collections of classes and functions shared among all tree converters.
 """
 
 import copy
-import ivy.functional.frontend.numpy as np
+import numpy as np
 import ivy.functional.frontends.torch as torch
 
 from ._tree_implementations import TreeImpl
