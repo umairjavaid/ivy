@@ -13,3 +13,4 @@ class MissingConverter(RuntimeError):
 
     def __init__(self, msg):
         super().__init__(msg + _missing_converter)
+

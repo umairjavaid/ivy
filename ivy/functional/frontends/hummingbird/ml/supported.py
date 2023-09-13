@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 
 from .exceptions import MissingConverter
@@ -11,8 +10,8 @@ def _build_backend_map():
     backends = defaultdict(lambda: None)
 
     if torch_installed():
-        import torch
-
+        #import torch
+        import ivy.functional.frontends.torch as torch
         backends[torch.__name__] = torch.__name__
         backends["py" + torch.__name__] = torch.__name__  # For compatibility with earlier versions.
 
@@ -138,6 +137,12 @@ def get_sklearn_api_operator_name(model_type):
         raise MissingConverter("Unable to find converter for model type {}.".format(model_type))
     return sklearn_api_operator_name_map[model_type]
 
+TREE_IMPLEMENTATION = "tree_implementation"
+"""Which tree implementation to use. Values can be: gemm, tree_trav, perf_tree_trav."""
+
+TREE_OP_PRECISION_DTYPE = "tree_op_precision_dtype"
+"""Which data type to be used for the threshold and leaf values of decision nodes. Values can be: float32 or float64."""
+
 REMAINDER_SIZE = "remainder_size"
 """Determines the number of rows that an auxiliary remainder model can accept."""
 
@@ -150,8 +155,12 @@ OUTPUT_NAMES = "output_names"
 CONTAINER = "container"
 """Boolean used to chose whether to return the container for Sklearn API or just the model."""
 
+BATCH_SIZE = "batch_size"
+"""Select whether to partition the input dataset at inference time in N batch_size partitions."""
+
 N_THREADS = "n_threads"
 """Select how many threads to use for scoring. This parameter will set the number of intra-op threads.
 Inter-op threads are by default set to 1 in Hummingbird. Check `tests.test_extra_conf.py` for usage examples."""
 
-
+MAX_STRING_LENGTH = "max_string_length"
+"""Maximum expected length for string features. By default this value is set using the training information."""
