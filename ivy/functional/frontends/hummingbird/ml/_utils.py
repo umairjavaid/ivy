@@ -7,25 +7,26 @@ def ivy_installed():
     """
     Checks that *ivy* is available.
     """
-    try:
-        import ivy
-        assert parse(ivy.__version__) > Version("1.0.0"), "Please install torch >1.0.0"
+    # try:
+    #     import ivy
+    #     assert parse(ivy.__version__) > Version("1.0.0"), "Please install torch >1.0.0"
 
-        return True
-    except ImportError:
-        return False
+    #     return True
+    # except ImportError:
+    #     return False
+    return True
 
 def get_device(model):
     """
     Convenient function used to get the runtime device for the model.
     """
-    assert issubclass(model.__class__, torch.nn.Module)
+    # assert issubclass(model.__class__, torch.nn.Module)
 
-    device = None
-    if len(list(model.parameters())) > 0:
-        device = next(model.parameters()).device  # Assuming we are using a single device for all parameters
+    # device = None
+    # if len(list(model.parameters())) > 0:
+    #     device = next(model.parameters()).device  # Assuming we are using a single device for all parameters
 
-    return device
+    return model._device
 
 def from_strings_to_ints(input, max_string_length):
     """

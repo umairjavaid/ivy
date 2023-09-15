@@ -1,7 +1,7 @@
 import numpy as np
 #import torch
-import ivy.functional.frontends.torch as torch
-
+#import ivy.functional.frontends.torch as torch
+import ivy
 from .onnxconverter_common.topology import Topology as ONNXTopology
 from .onnxconverter_common.registration import get_converter
 from ._executor import Executor
@@ -120,9 +120,9 @@ def convert(topology, backend, test_input, device, extra_config={}):
         raise NotImplemented
     else:
         # Set the device for the model.
-        if device != "cpu":
-            if backend == torch.__name__ or torch.jit.__name__:
-                executor = executor.to(device)
+        # if device != "cpu":
+        #     if backend == torch.__name__ or torch.jit.__name__:
+        executor = executor.to_device(device)
 
         # If the backend is tochscript, jit the model.
         # if backend == torch.jit.__name__:
