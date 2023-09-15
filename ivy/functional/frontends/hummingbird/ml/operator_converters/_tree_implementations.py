@@ -10,8 +10,8 @@ Base classes for tree algorithm implementations.
 from abc import abstractmethod
 from enum import Enum
 import numpy as np
-import ivy.functional.frontends.torch as torch
-#import torch
+#import ivy.functional.frontends.torch as torch
+import torch
 
 from . import constants
 from ._physical_operator import PhysicalOperator

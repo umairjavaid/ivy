@@ -10,8 +10,8 @@ Collections of classes and functions shared among all tree converters.
 
 import copy
 import numpy as np
-import ivy.functional.frontends.torch as torch
-#import torch
+#import ivy.functional.frontends.torch as torch
+import torch
 from ._tree_implementations import TreeImpl
 from ._tree_implementations import GEMMDecisionTreeImpl, TreeTraversalDecisionTreeImpl, PerfectTreeTraversalDecisionTreeImpl
 from . import constants

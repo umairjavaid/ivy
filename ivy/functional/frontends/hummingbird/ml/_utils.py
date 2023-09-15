@@ -1,5 +1,5 @@
-import ivy.functional.frontends.torch as torch
-#import torch
+#import ivy.functional.frontends.torch as torch
+import torch
 import numpy as np
 from packaging.version import parse, Version
 

@@ -1,6 +1,6 @@
 import numpy as np
-#import torch
-import ivy.functional.frontends.torch as torch
+import torch
+#import ivy.functional.frontends.torch as torch
 
 from .onnxconverter_common.topology import Topology as ONNXTopology
 from .onnxconverter_common.registration import get_converter

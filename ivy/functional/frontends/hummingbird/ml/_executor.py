@@ -1,5 +1,5 @@
-import ivy.functional.frontends.torch as torch
-#import torch
+#import ivy.functional.frontends.torch as torch
+import torch
 from ._utils import get_device, from_strings_to_ints
 #import ivy.functional.frontends.numpy as np
 import numpy as np
