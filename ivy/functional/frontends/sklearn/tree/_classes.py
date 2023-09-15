@@ -5,8 +5,13 @@ from ..base import (
     MultiOutputMixin,
 )
 
+<<<<<<< HEAD
 class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
+=======
+
+class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
+>>>>>>> upstream/main
     @abstractmethod
     def __init__(
         self,
@@ -39,11 +44,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def get_depth(self):
         raise NotImplementedError
+<<<<<<< HEAD
         
+=======
+>>>>>>> upstream/main
 
     def get_n_leaves(self):
         raise NotImplementedError
 
+<<<<<<< HEAD
 
     def _support_missing_values(self, X):
         raise NotImplementedError
@@ -53,6 +62,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         raise NotImplementedError
 
 
+=======
+    def _support_missing_values(self, X):
+        raise NotImplementedError
+
+    def _compute_missing_values_in_feature_mask(self, X):
+        raise NotImplementedError
+
+>>>>>>> upstream/main
     def _fit(
         self,
         X,
@@ -63,6 +80,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     ):
         raise NotImplementedError
 
+<<<<<<< HEAD
 
     def _validate_X_predict(self, X, check_input):
         raise NotImplementedError
@@ -74,10 +92,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def apply(self, X, check_input=True):
         raise NotImplementedError
     
+=======
+    def _validate_X_predict(self, X, check_input):
+        raise NotImplementedError
+
+    def predict(self, X, check_input=True):
+        raise NotImplementedError
+
+    def apply(self, X, check_input=True):
+        raise NotImplementedError
+>>>>>>> upstream/main
 
     def decision_path(self, X, check_input=True):
         raise NotImplementedError
 
+<<<<<<< HEAD
 
     def _prune_tree(self):
         raise NotImplementedError
@@ -87,13 +116,24 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         raise NotImplementedError
 
 
+=======
+    def _prune_tree(self):
+        raise NotImplementedError
+
+    def cost_complexity_pruning_path(self, X, y, sample_weight=None):
+        raise NotImplementedError
+
+>>>>>>> upstream/main
     @property
     def feature_importances_(self):
         raise NotImplementedError
 
 
 class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/main
     def __init__(
         self,
         *,
@@ -126,7 +166,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         )
 
     def fit(self, X, y, sample_weight=None, check_input=True):
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/main
         super()._fit(
             X,
             y,
@@ -147,4 +190,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             "log_loss",
             "entropy",
         }
+<<<<<<< HEAD
         return {"multilabel": True, "allow_nan": allow_nan}
+=======
+        return {"multilabel": True, "allow_nan": allow_nan}
+>>>>>>> upstream/main
