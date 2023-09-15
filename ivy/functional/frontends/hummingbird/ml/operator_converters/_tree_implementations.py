@@ -183,7 +183,7 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
     def aggregation(self, x):
         return x
 
-    def forward(self, x):
+    def _forward(self, x):
         #x = x.t()
         x = x.T()
         #x = self.decision_cond(torch.mm(self.weight_1, x), self.bias_1)
@@ -492,7 +492,8 @@ class GEMMDecisionTreeImpl(GEMMTreeImpl):
         )
 
     def aggregation(self, x):
-        output = x.sum(0).t()
+        #output = x.sum(0).t()
+        output = x.sum(0).T()
 
         return output
 
@@ -573,8 +574,8 @@ class GEMMGBDTImpl(GEMMTreeImpl):
         self.n_trees_per_class = len(tree_parameters) // self.n_gbdt_classes
 
     def aggregation(self, x):
-        output = torch.squeeze(x).t().view(-1, self.n_gbdt_classes, self.n_trees_per_class).sum(2)
-
+        #output = torch.squeeze(x).t().view(-1, self.n_gbdt_classes, self.n_trees_per_class).sum(2)
+        output = ivy.squeeze(x).t().view(-1, self.n_gbdt_classes, self.n_trees_per_class).sum(2)
         return self.post_transform(output)
 
 

@@ -30,7 +30,7 @@ end_time = time.time()
 sklearn_inference_time = end_time - start_time
 
 # Convert the scikit-learn model to a Hummingbird format
-hb_model = ml.convert(clf, 'pytorch')
+hb_model = ml.convert(clf, 'ivy')
 
 # Measure inference time with Hummingbird
 start_time = time.time()

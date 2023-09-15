@@ -56,7 +56,7 @@ class Executor(ivy.Module, object):
             self.max_string_length = extra_config[constants.MAX_STRING_LENGTH]
 
     #removed with torch.no_grad():
-    def forward(self, *inputs):
+    def _forward(self, *inputs):
         assert len(self._input_names) == len(inputs)
         inputs = [*inputs]
         variable_map = {}
