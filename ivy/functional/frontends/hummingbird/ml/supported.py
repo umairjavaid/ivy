@@ -10,15 +10,15 @@ def _build_backend_map():
     backends = defaultdict(lambda: None)
 
     if torch_installed():
-        #import torch
-        import ivy.functional.frontends.torch as torch
+        import torch
+        #import ivy.functional.frontends.torch as torch
         backends[torch.__name__] = torch.__name__
         backends["py" + torch.__name__] = torch.__name__  # For compatibility with earlier versions.
 
         #backends[torch.jit.__name__] = torch.jit.__name__
         #backends["torchscript"] = torch.jit.__name__  # For reference outside Hummingbird.
 
-    return backends
+        return backends
 
 backends = _build_backend_map()
 
