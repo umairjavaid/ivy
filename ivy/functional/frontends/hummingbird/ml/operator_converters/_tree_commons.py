@@ -13,7 +13,7 @@ import numpy as np
 import ivy.functional.frontends.torch as torch
 #import torch
 from ._tree_implementations import TreeImpl
-from ._tree_implementations import GEMMDecisionTreeImpl, TreeTraversalDecisionTreeImpl, PerfectTreeTraversalDecisionTreeImpl
+from ._tree_implementations import GEMMDecisionTreeImpl #, TreeTraversalDecisionTreeImpl, PerfectTreeTraversalDecisionTreeImpl
 from . import constants
 from ..exceptions import MissingConverter
 

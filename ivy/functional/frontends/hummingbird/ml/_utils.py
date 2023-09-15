@@ -3,7 +3,7 @@ import ivy
 import numpy as np
 from packaging.version import parse, Version
 
-def ivy_installed():
+def torch_installed():
     """
     Checks that *ivy* is available.
     """

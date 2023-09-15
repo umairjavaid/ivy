@@ -51,7 +51,7 @@ class AbstracTreeImpl(PhysicalOperator):
         pass
 
 
-class AbstractPyTorchTreeImpl(AbstracTreeImpl, torch.nn.Module):
+class AbstractPyTorchTreeImpl(AbstracTreeImpl, ivy.Module):
     """
     Abstract class definig the basic structure for tree-base models implemented in PyTorch.
     """
