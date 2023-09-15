@@ -1,16 +1,15 @@
-import ivy.functional.frontends.torch as torch
+import ivy
 #import torch
 import numpy as np
 from packaging.version import parse, Version
 
-def torch_installed():
+def ivy_installed():
     """
-    Checks that *PyTorch* is available.
+    Checks that *ivy* is available.
     """
     try:
-        #import torch
-        import ivy.functional.frontends.torch as torch
-        assert parse(torch.__version__) > Version("1.0.0"), "Please install torch >1.0.0"
+        import ivy
+        assert parse(ivy.__version__) > Version("1.0.0"), "Please install torch >1.0.0"
 
         return True
     except ImportError:
