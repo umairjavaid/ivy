@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 #import ivy.functional.frontends.torch as torch
-
+import ivy
 from .onnxconverter_common.topology import Topology as ONNXTopology
 from .onnxconverter_common.registration import get_converter
 from ._executor import Executor
@@ -113,6 +113,7 @@ def convert(topology, backend, test_input, device, extra_config={}):
         topology.input_container.input_names, topology.input_container.output_names, operator_map, operators, extra_config
     ).eval()
 
+    executor = ivy.transpile(executor, source= "torch", to="jax") 
 
     if False:
         raise NotImplemented
