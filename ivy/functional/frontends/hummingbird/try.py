@@ -15,7 +15,7 @@ def get_device(model):
     return model._device
 
 def main():
-    mymodel = myivymodel(ivy.array(2),ivy.array(2))
+    mymodel = myivymodel(ivy.array(2),ivy.array(2)).eval()
     print(mymodel(ivy.array(2)))
     print(get_device(mymodel))
 

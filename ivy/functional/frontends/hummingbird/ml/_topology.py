@@ -111,7 +111,7 @@ def convert(topology, backend, test_input, device, extra_config={}):
     operators = list(topology.topological_operator_iterator())
     executor = Executor(
         topology.input_container.input_names, topology.input_container.output_names, operator_map, operators, extra_config
-    ).eval()
+    ) # .eval() THIS IS A BUG IN IVY! PLEASE REPORT
 
 
     if False:
