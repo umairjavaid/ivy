@@ -113,7 +113,7 @@ def convert(topology, backend, test_input, device, extra_config={}):
         topology.input_container.input_names, topology.input_container.output_names, operator_map, operators, extra_config
     ).eval()
 
-    executor = ivy.transpile(executor, source= "torch", to="jax") 
+    executor = ivy.unify(executor, source= "torch") 
 
     if False:
         raise NotImplemented
