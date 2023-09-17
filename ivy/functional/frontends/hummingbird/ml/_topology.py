@@ -113,8 +113,6 @@ def convert(topology, backend, test_input, device, extra_config={}):
         topology.input_container.input_names, topology.input_container.output_names, operator_map, operators, extra_config
     ).eval()
 
-    executor = ivy.unify(executor, source= "torch") 
-
     if False:
         raise NotImplemented
     elif False:
@@ -132,7 +130,7 @@ def convert(topology, backend, test_input, device, extra_config={}):
         #     torch.jit.optimized_execution(executor)
 
         hb_model = executor
-
+    hb_model = ivy.unify(hb_model, source= "torch")
     # Return if the container is not needed.
     if constants.CONTAINER in extra_config and not extra_config[constants.CONTAINER]:
         return hb_model

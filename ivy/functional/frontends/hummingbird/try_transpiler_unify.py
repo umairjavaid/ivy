@@ -15,7 +15,7 @@ class mytorchmodel(torch.nn.Module):
 
 def main():
     myivymodel = ivy.unify(mytorchmodel(torch.tensor(2), torch.tensor(2)), source="torch")
-    print(myivymodel._forward(ivy.array([2])))
+    print(myivymodel._forward(ivy.array([2])), device="gpu:0")
     
 
 if __name__ == "__main__":
