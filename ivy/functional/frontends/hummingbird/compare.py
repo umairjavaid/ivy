@@ -9,22 +9,22 @@ import ivy
 
 ivy.set_backend("jax")
 # Load the Iris dataset
-# data = load_iris()
-# X, y = data.data, data.target
+data = load_iris()
+X, y = data.data, data.target
 
 from sklearn.datasets import make_classification
 
 # Define the dataset characteristics
-n_samples = 50000  # Number of samples
-n_features = 75   # Number of features
-n_classes = 2     # Number of classes
-n_informative = 50  # Number of informative features
-n_redundant = 5    # Number of redundant features
+# n_samples = 50000  # Number of samples
+# n_features = 75   # Number of features
+# n_classes = 2     # Number of classes
+# n_informative = 50  # Number of informative features
+# n_redundant = 5    # Number of redundant features
 
-# Create the dataset
-X, y = make_classification(n_samples=n_samples, n_features=n_features, n_classes=n_classes,
-                           n_informative=n_informative, n_redundant=n_redundant,
-                           random_state=42)
+# # Create the dataset
+# X, y = make_classification(n_samples=n_samples, n_features=n_features, n_classes=n_classes,
+#                            n_informative=n_informative, n_redundant=n_redundant,
+#                            random_state=42)
 
 
 # Create a larger dataset by repeating the original data
@@ -36,7 +36,7 @@ y = np.tile(y, n_repeats)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train a scikit-learn DecisionTreeClassifier
-clf = DecisionTreeClassifier(max_depth=3)
+clf = DecisionTreeClassifier(max_depth=10)
 clf.fit(X_train, y_train)
 
 # Measure inference time without Hummingbird
