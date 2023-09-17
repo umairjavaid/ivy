@@ -6,6 +6,8 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 import ivy
+
+ivy.set_backend("jax")
 # Load the Iris dataset
 data = load_iris()
 X, y = data.data, data.target
