@@ -13,7 +13,7 @@ import numpy as np
 #import ivy.functional.frontends.torch as torch
 import torch
 from ._tree_implementations import TreeImpl
-from ._tree_implementations import GEMMDecisionTreeImpl, TreeTraversalDecisionTreeImpl, PerfectTreeTraversalDecisionTreeImpl
+from ._tree_implementations import GEMMDecisionTreeImpl, TreeTraversalDecisionTreeImpl #, PerfectTreeTraversalDecisionTreeImpl
 from . import constants
 from ..exceptions import MissingConverter
 
@@ -470,4 +470,5 @@ def convert_decision_ensemble_tree_common(
     if tree_type == TreeImpl.tree_trav:
         return TreeTraversalDecisionTreeImpl(operator, net_parameters, max_depth, n_features, classes, extra_config)
     else:  # Remaining possible case: tree_type == TreeImpl.perf_tree_trav
-        return PerfectTreeTraversalDecisionTreeImpl(operator, net_parameters, max_depth, n_features, classes, extra_config)
+        #return PerfectTreeTraversalDecisionTreeImpl(operator, net_parameters, max_depth, n_features, classes, extra_config)
+        print("PerfectTreeTraversalDecisionTreeImpl not implemented")
