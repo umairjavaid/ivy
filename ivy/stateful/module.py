@@ -1212,7 +1212,12 @@ class _TorchIvyModule(Module):
                 native.__setattr__(k, v)
             elif isinstance(v, torch.Tensor):
                 # noinspection PyProtectedMember
-                native.__setattr__(k, torch.nn.Parameter(v))
+                
+                #native.__setattr__(k, torch.nn.Parameter(v))
+                if (isinstance(v,torch.nn.Parameter)):
+                    native.__setattr__(k, v)
+                else:
+                    native.__setattr__(k, torch.nn.Parameter(v))
             else:
                 raise ivy.utils.exceptions.IvyException(
                     "found item in variable container {} which was neither a "
