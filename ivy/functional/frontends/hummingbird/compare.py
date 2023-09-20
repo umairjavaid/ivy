@@ -36,7 +36,7 @@ y = np.tile(y, n_repeats)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train a scikit-learn DecisionTreeClassifier
-clf = DecisionTreeClassifier(max_depth=9)
+clf = DecisionTreeClassifier(max_depth=10)
 clf.fit(X_train, y_train)
 
 # Measure inference time without Hummingbird
