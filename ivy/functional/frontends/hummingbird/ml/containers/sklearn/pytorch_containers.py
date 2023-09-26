@@ -41,7 +41,7 @@ class PyTorchSklearnContainerRegression(
             return self.model.forward(*inputs)[0].cpu().numpy().ravel()
         else:
             # print(self.model._forward(*inputs))
-            return self.model._forward(*inputs)[0][0].numpy().ravel()
+            return self.model._forward(*inputs)[0][0].cpu().numpy().ravel()
 
 
 class PyTorchSklearnContainerClassification(
