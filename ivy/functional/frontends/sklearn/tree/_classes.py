@@ -23,7 +23,7 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import ivy
-#import numpy as np
+import numpy as np
 from scipy.sparse import issparse
 
 from ..base import (
@@ -48,11 +48,11 @@ from . import _criterion, _splitter
 from ._criterion import Criterion
 from ._splitter import Splitter
 from ._tree import (
-    BestFirstTreeBuilder,
+#    BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
     Tree,
-    _build_pruned_tree_ccp,
-    ccp_pruning_path,
+#    _build_pruned_tree_ccp,
+#    ccp_pruning_path,
 )
 
 CRITERIA_CLF = {

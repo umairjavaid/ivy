@@ -105,7 +105,7 @@ class Tree:
         self.n_outputs = n_outputs
         self.n_classes = ivy.zeros(n_outputs, dtype=ivy.int32)
 
-        self.max_n_classes = np.max(n_classes)
+        self.max_n_classes = ivy.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
 
         for k in range(n_outputs):
@@ -171,8 +171,8 @@ class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        self.nodes = np.zeros(capacity, dtype="int32")
-        self.value = np.zeros(capacity * self.value_stride, dtype="int32")
+        self.nodes = ivy.zeros(capacity, dtype="int32")
+        self.value = ivy.zeros(capacity * self.value_stride, dtype="int32")
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
@@ -636,13 +636,13 @@ class TreeBuilder:
 
         elif X.dtype != "float32":
             # since we have to copy, we will make it Fortran for efficiency
-            X = np.asfortranarray(X, dtype="float32")
+            X = ivy.asfortranarray(X, dtype="float32")
 
         # TODO: This check for y seems to be redundant, as it is also
         #  present in the BaseDecisionTree's fit method, and therefore
         #  can be removed.
         if y.dtype != "float32" or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype="float32")
+            y = ivy.ascontiguousarray(y, dtype="float32")
 
         if sample_weight is not None and (
             sample_weight.base.dtype != "float64"
