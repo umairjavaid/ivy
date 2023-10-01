@@ -1,4 +1,3 @@
-from numpy import partition
 from ._criterion import Criterion
 import ivy
 
