@@ -296,48 +296,49 @@ class Tree:
     # not so sure about sparse implimentation yet
     def _apply_sparse_csr(self, X):
         """Finds the terminal region (=leaf node) for each sample in sparse X."""
-        if not isinstance(X, ivy.data_classes.array.array.Array):
-            raise ValueError(
-                "X should be a ivy.data_classes.array.array.Array, got %s" % type(X)
-            )
+        # if not isinstance(X, ivy.data_classes.array.array.Array):
+        #     raise ValueError(
+        #         "X should be a ivy.data_classes.array.array.Array, got %s" % type(X)
+        #     )
 
-        if X.dtype != "float32":
-            raise ValueError("X.dtype should be float32, got %s" % X.dtype)
+        # if X.dtype != "float32":
+        #     raise ValueError("X.dtype should be float32, got %s" % X.dtype)
 
-        n_samples, n_features = X.shape
+        # n_samples, n_features = X.shape
 
-        # Initialize output
-        out = ivy.zeros(n_samples, dtype="float32")
+        # # Initialize output
+        # out = ivy.zeros(n_samples, dtype="float32")
 
-        # Initialize auxiliary data structures on CPU
-        feature_to_sample = ivy.full((n_features,), -1, dtype="float32")
-        X_sample = ivy.zeros((n_features,), dtype="float32")
+        # # Initialize auxiliary data structures on CPU
+        # feature_to_sample = ivy.full((n_features,), -1, dtype="float32")
+        # X_sample = ivy.zeros((n_features,), dtype="float32")
 
-        for i in range(n_samples):
-            node = self.nodes[0]  # Start from the root node
+        # for i in range(n_samples):
+        #     node = self.nodes[0]  # Start from the root node
 
-            for k in range(X.indptr[i], X.indptr[i + 1]):
-                feature_to_sample[X.indices[k]] = i
-                X_sample[X.indices[k]] = X.data[k]
+        #     for k in range(X.indptr[i], X.indptr[i + 1]):
+        #         feature_to_sample[X.indices[k]] = i
+        #         X_sample[X.indices[k]] = X.data[k]
 
-            while node.left_child is not None:
-                if feature_to_sample[node.feature] == i:
-                    feature_value = X_sample[node.feature]
-                else:
-                    feature_value = ivy.array(
-                        0, dtype="float32"
-                    )  # feature value is computed during training
+        #     while node.left_child is not None:
+        #         if feature_to_sample[node.feature] == i:
+        #             feature_value = X_sample[node.feature]
+        #         else:
+        #             feature_value = ivy.array(
+        #                 0, dtype="float32"
+        #             )  # feature value is computed during training
 
-                threshold = ivy.array(node.threshold, dtype="float32")
-                if feature_value <= threshold:
-                    node = node.left_child
-                else:
-                    node = node.right_child
+        #         threshold = ivy.array(node.threshold, dtype="float32")
+        #         if feature_value <= threshold:
+        #             node = node.left_child
+        #         else:
+        #             node = node.right_child
 
-            # Get the index of the leaf node
-            out[i] = self.nodes.index(node)
+        #     # Get the index of the leaf node
+        #     out[i] = self.nodes.index(node)
 
-        return out
+        # return out
+        raise NotImplementedError
 
     def decision_path(self, X):
         if issparse(X):
@@ -851,9 +852,9 @@ class DepthFirstTreeBuilder(TreeBuilder):
                 split.missing_go_to_left,
             )
 
-            if node_id == INTPTR_MAX:
-                rc = -1
-                break
+            # if node_id == INTPTR_MAX:
+            #     #rc = -1
+            #     break
 
             # Store value for all nodes, to facilitate tree/model
             # inspection and interpretation
