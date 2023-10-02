@@ -742,12 +742,13 @@ class DepthFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         init_capacity: int
 
-        if tree.max_depth <= 10:
-            init_capacity = int(2 ** (tree.max_depth + 1)) - 1
-        else:
-            init_capacity = 2047
+        #removed tree resize, added node 
+        # if tree.max_depth <= 10:
+        #     init_capacity = int(2 ** (tree.max_depth + 1)) - 1
+        # else:
+        #     init_capacity = 2047
 
-        tree._resize(init_capacity)
+        # tree._resize(init_capacity)
 
         # Parameters
         splitter = self.splitter
@@ -888,11 +889,12 @@ class DepthFirstTreeBuilder(TreeBuilder):
             if depth > max_depth_seen:
                 max_depth_seen = depth
 
-        if rc >= 0:
-            rc = tree._resize_c(tree.node_count)
+        #resize is not needed because we are in python, it allocates space dynamically
+        # if rc >= 0:
+        #     rc = tree._resize_c(tree.node_count)
 
-        if rc == -1:
-            raise MemoryError()
+        # if rc == -1:
+        #     raise MemoryError()
 
 
 # --- Helpers --- #
