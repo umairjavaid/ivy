@@ -1,9 +1,8 @@
 import ivy
-
+import numpy as np  # added for np.ascontigous 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 from scipy.sparse import isspmatrix_csr
-
 from ._splitter import SplitRecord, Splitter
 
 EPSILON = ivy.finfo(ivy.double).eps
@@ -151,9 +150,10 @@ class Tree:
         Returns -1 in case of failure to allocate memory (and raise
         MemoryError) or 0 otherwise.
         """
-        if self._resize_c(capacity) != 0:
-            # Acquire gil only if we need to raise
-            raise MemoryError()
+        # if self._resize_c(capacity) != 0:
+        #     # Acquire gil only if we need to raise
+        #     raise MemoryError()
+        raise NotImplementedError
 
     def _resize_c(self, capacity=float("inf")):
         """
@@ -162,29 +162,30 @@ class Tree:
         Returns -1 in case of failure to allocate memory (and raise
         MemoryError) or 0 otherwise.
         """
-        if capacity == self.capacity and self.nodes is None:
-            return 0
+        # if capacity == self.capacity and self.nodes is None:
+        #     return 0
 
-        if capacity == INTPTR_MAX:
-            if self.capacity == 0:
-                capacity = 3
-            else:
-                capacity = 2 * self.capacity
+        # if capacity == INTPTR_MAX:
+        #     if self.capacity == 0:
+        #         capacity = 3
+        #     else:
+        #         capacity = 2 * self.capacity
 
-        self.nodes = ivy.zeros(capacity, dtype="int32")
-        self.value = ivy.zeros(capacity * self.value_stride, dtype="int32")
+        # self.nodes = ivy.zeros(capacity, dtype="int32")
+        # self.value = ivy.zeros(capacity * self.value_stride, dtype="int32")
 
-        # value memory is initialised to 0 to enable classifier argmax
-        if capacity > self.capacity:
-            self.value[
-                self.capacity * self.value_stride : capacity * self.value_stride
-            ] = 0
+        # # value memory is initialised to 0 to enable classifier argmax
+        # if capacity > self.capacity:
+        #     self.value[
+        #         self.capacity * self.value_stride : capacity * self.value_stride
+        #     ] = 0
 
-        if capacity < self.node_count:
-            self.node_count = capacity
+        # if capacity < self.node_count:
+        #     self.node_count = capacity
 
-        self.capacity = capacity
-        return 0
+        # self.capacity = capacity
+        # return 0
+        raise NotImplementedError
 
     def _add_node(
         self,
@@ -623,26 +624,31 @@ class TreeBuilder:
     ):
         """Check input dtype, layout, and format."""
         if issparse(X):
-            X = (
-                X.tocsc()
-            )  # tocsc() is a method provided by the scipy.sparse module in the SciPy library. It's used to convert a sparse matrix to the Compressed Sparse Column (CSC) format.
-            X.sort_indices()  # This is done to ensure that the indices of non-zero elements within the matrix are sorted in ascending order.
+            # X = (
+            #     X.tocsc()
+            # )  # tocsc() is a method provided by the scipy.sparse module in the SciPy library. It's used to convert a sparse matrix to the Compressed Sparse Column (CSC) format.
+            # X.sort_indices()  # This is done to ensure that the indices of non-zero elements within the matrix are sorted in ascending order.
 
-            if X.data.dtype != "float32":
-                X.data = np.ascontiguousarray(X.data, dtype=ivy.float32)
+            # if X.data.dtype != "float32":
+            #     X.data = np.ascontiguousarray(X.data, dtype=ivy.float32)
 
-            if X.indices.dtype != "int32" or X.indptr.dtype != "int32":
-                raise ValueError("No support for np.int64 index-based sparse matrices")
+            # if X.indices.dtype != "int32" or X.indptr.dtype != "int32":
+            #     raise ValueError("No support for np.int64 index-based sparse matrices")
+            raise NotImplementedError
 
         elif X.dtype != "float32":
             # since we have to copy, we will make it Fortran for efficiency
-            X = ivy.asfortranarray(X, dtype="float32")
+            X = np.asfortranarray(X, dtype="float32")
+            #raise NotImplementedError
 
         # TODO: This check for y seems to be redundant, as it is also
         #  present in the BaseDecisionTree's fit method, and therefore
         #  can be removed.
         if y.dtype != "float32" or not y.flags.contiguous:
-            y = ivy.ascontiguousarray(y, dtype="float32")
+            y = np.ascontiguousarray(y, dtype="float32")
+            #TODO remove this comment #raise NotImplementedError
+            #TODO adding pass becauseas.contigousarray is not implemented
+
 
         if sample_weight is not None and (
             sample_weight.base.dtype != "float64"
