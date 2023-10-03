@@ -342,7 +342,8 @@ class Tree:
 
     def decision_path(self, X):
         if issparse(X):
-            return self._decision_path_sparse_csr(X)
+            #return self._decision_path_sparse_csr(X)
+            raise NotImplementedError
         else:
             return self._decision_path_dense(X)
 
@@ -394,62 +395,63 @@ class Tree:
     # not tested
     def _decision_path_sparse_csr(self, X):
         # Check input
-        if not isspmatrix_csr(X):
-            raise ValueError("X should be in csr_matrix format, got %s" % type(X))
+        # if not isspmatrix_csr(X):
+        #     raise ValueError("X should be in csr_matrix format, got %s" % type(X))
 
-        if X.dtype != "float32":
-            raise ValueError("X.dtype should be float32, got %s" % X.dtype)
+        # if X.dtype != "float32":
+        #     raise ValueError("X.dtype should be float32, got %s" % X.dtype)
 
-        # Extract input
-        X_data = X.data
-        X_indices = X.indices
-        X_indptr = X.indptr
+        # # Extract input
+        # X_data = X.data
+        # X_indices = X.indices
+        # X_indptr = X.indptr
 
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        # n_samples = X.shape[0]
+        # n_features = X.shape[1]
 
-        # Initialize output
-        indptr = ivy.zeros(n_samples + 1, dtype="int32")
-        indices = ivy.zeros(n_samples * (1 + self.max_depth), dtype="int32")
+        # # Initialize output
+        # indptr = ivy.zeros(n_samples + 1, dtype="int32")
+        # indices = ivy.zeros(n_samples * (1 + self.max_depth), dtype="int32")
 
-        # Initialize auxiliary data-structure
-        feature_value = 0.0
-        node = None
-        X_sample = ivy.zeros(n_features, dtype="float32")
-        feature_to_sample = ivy.full(n_features, -1, dtype="int32")
+        # # Initialize auxiliary data-structure
+        # feature_value = 0.0
+        # node = None
+        # X_sample = ivy.zeros(n_features, dtype="float32")
+        # feature_to_sample = ivy.full(n_features, -1, dtype="int32")
 
-        for i in range(n_samples):
-            node = self.nodes
-            indptr[i + 1] = indptr[i]
+        # for i in range(n_samples):
+        #     node = self.nodes
+        #     indptr[i + 1] = indptr[i]
 
-            for k in range(X_indptr[i], X_indptr[i + 1]):
-                feature_to_sample[X_indices[k]] = i
-                X_sample[X_indices[k]] = X_data[k]
+        #     for k in range(X_indptr[i], X_indptr[i + 1]):
+        #         feature_to_sample[X_indices[k]] = i
+        #         X_sample[X_indices[k]] = X_data[k]
 
-            # While node not a leaf
-            while node.left_child != _TREE_LEAF:
-                indices[indptr[i + 1]] = node - self.nodes
-                indptr[i + 1] += 1
+        #     # While node not a leaf
+        #     while node.left_child != _TREE_LEAF:
+        #         indices[indptr[i + 1]] = node - self.nodes
+        #         indptr[i + 1] += 1
 
-                if feature_to_sample[node.feature] == i:
-                    feature_value = X_sample[node.feature]
-                else:
-                    feature_value = 0.0
+        #         if feature_to_sample[node.feature] == i:
+        #             feature_value = X_sample[node.feature]
+        #         else:
+        #             feature_value = 0.0
 
-                if feature_value <= node.threshold:
-                    node = self.nodes[node.left_child]
-                else:
-                    node = self.nodes[node.right_child]
+        #         if feature_value <= node.threshold:
+        #             node = self.nodes[node.left_child]
+        #         else:
+        #             node = self.nodes[node.right_child]
 
-            # Add the leaf node
-            indices[indptr[i + 1]] = node - self.nodes
-            indptr[i + 1] += 1
+        #     # Add the leaf node
+        #     indices[indptr[i + 1]] = node - self.nodes
+        #     indptr[i + 1] += 1
 
-        indices = indices[: indptr[n_samples]]
-        data = ivy.ones(shape=len(indices), dtype="int32")
-        out = csr_matrix((data, indices, indptr), shape=(n_samples, self.node_count))
+        # indices = indices[: indptr[n_samples]]
+        # data = ivy.ones(shape=len(indices), dtype="int32")
+        # out = csr_matrix((data, indices, indptr), shape=(n_samples, self.node_count))
 
-        return out
+        # return out
+        raise NotImplementedError
 
     def compute_node_depths(self):
         depths = ivy.zeros(self.node_count, dtype="int32")
@@ -769,8 +771,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
         is_left = 0
         n_node_samples = splitter.n_samples
         weighted_n_node_samples = 0.0
-        # split = SplitRecord()
-        split = None
+        split = SplitRecord()
         node_id = 0
 
         impurity = INFINITY
@@ -808,6 +809,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
             n_constant_features = stack_record.n_constant_features
 
             n_node_samples = end - start
+            #TODO: what does node reset do?
             _, weighted_n_node_samples = splitter.node_reset(
                 start, end, weighted_n_node_samples
             )
@@ -820,6 +822,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
             )
 
             if first:
+                #what does node impurity do?
                 impurity = splitter.node_impurity()
                 first = 0
 
@@ -828,6 +831,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             if not is_leaf:
                 # impurity is passed by value in the original code
+                #TODO: what does node_split do?
                 _, n_constant_features = splitter.node_split(
                     impurity, split, n_constant_features
                 )
@@ -839,7 +843,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
                     or split.pos >= end
                     or (split.improvement + EPSILON < min_impurity_decrease)
                 )
-
+            #TODO: What does _add_node do?
             node_id = tree._add_node(
                 parent,
                 is_left,

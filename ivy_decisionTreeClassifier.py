@@ -6,7 +6,14 @@ num_classes = 3
 X = np.random.rand(10, 5)
 y = np.random.randint(num_classes, size=10)
 # Train a scikit-learn DecisionTreeClassifier
+print("---sample_decisionTreeClassifier.py---")
+print(f"X: {X}")
+print(f"y: {y}")
+print("---sample_decisionTreeClassifier.py---")
 clf = DecisionTreeClassifier(max_depth=3)
+print("---sample_decisionTreeClassifier.py---")
+#print(f"clf: {clf}")
+print("---sample_decisionTreeClassifier.py---")
 clf.fit(X, y)
 
 # Measure inference time without Hummingbird

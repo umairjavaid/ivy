@@ -269,11 +269,11 @@ def node_split_best(
     end = splitter.end
     end_non_missing = 0
     n_missing = 0
-    has_missing = 0
+    has_missing = False
     n_searches = 0
     n_left = 0
     n_right = 0
-    missing_go_to_left = 0
+    missing_go_to_left = False
 
     samples = splitter.samples
     features = splitter.features
@@ -352,6 +352,7 @@ def node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
+        #TODO: This causes the issues. Rectify this first with Illia
         partitioner.sort_samples_and_feature_values(current_split.feature)
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
@@ -377,15 +378,12 @@ def node_split_best(
 
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
-        has_missing = n_missing != 0
-        print(f"n_missing: {n_missing}")
-        print(f"has_missing: {has_missing}")
-        input()
-        if has_missing:
-            criterion.init_missing(
-                n_missing
-            )  # This needs to be called for Gini to have access to n_missing
-
+        # if has_missing:
+        #     criterion.init_missing(
+        #         n_missing
+        #     )  #TODO: This needs to be called for Gini to have access to n_missing
+        #TODO fix the above, following line is temp
+        criterion.init_missing(n_missing)
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
@@ -522,27 +520,32 @@ def node_split_best(
     n_constant_features = n_total_constants
     return 0, n_constant_features
 
-
+#TODO: Can we use ivy.sort here. IT is optimissed for GPU. Discuss with Illia
+# def sort(feature_values):
+#     return ivy.sort(feature_values)
 def sort(feature_values, samples, n):
-    # print("---sort---")
-    # print(f"feature_values: {feature_values}")
-    # print(f"samples: {samples}")
-    # print(f"n: {n}")
-    # print("---sort---")
-    if n == 0:
-        return
-    maxd = 2 * int(ivy.log(n))
-    introsort(feature_values, samples, n, maxd)
-    return feature_values, samples
+    print("---sort---")
+    print(f"feature_values: {feature_values}")
+    print(f"samples: {samples}")
+    print(f"n: {n}")
+    print("---sort---")
+    # if n == 0:
+    #     return
+    # maxd = 2 * int(ivy.log(n))
+    # introsort(feature_values, samples, n, maxd)
+    # return feature_values, samples
+
+    #TODO: Experimental. trying sort
+    return ivy.sort(feature_values), samples
 
 
 def swap(feature_values, samples, i, j):
-    # print("---swap---")
-    # print(f"feature_values: {feature_values}")
-    # print(f"samples: {samples}")
-    # print(f"i: {i}")
-    # print(f"j: {j}")
-    # print("---swap---")
+    print("---swap---")
+    print(f"feature_values: {feature_values}")
+    print(f"samples: {samples}")
+    print(f"i: {i}")
+    print(f"j: {j}")
+    print("---swap---")
     feature_values[samples[i]], feature_values[samples[j]] = (
         feature_values[samples[j]],
         feature_values[samples[i]],
@@ -554,13 +557,13 @@ def swap(feature_values, samples, i, j):
 def median3(feature_values, n):
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
-    # print("---median3---")
-    # print(f"feature_values: {feature_values}")
-    # print(f"n: {n}")
-    # print(f"feature_values[0]: {feature_values[0]}")
-    # print(f"feature_values[n / 2]: {feature_values[int(n / 2)]}")
-    # print(f"feature_values[n - 1]: {feature_values[int(n - 1)]}")
-    # print("---median3---")
+    print("---median3---")
+    print(f"feature_values: {feature_values}")
+    print(f"n: {n}")
+    print(f"feature_values[0]: {feature_values[0]}")
+    print(f"feature_values[n / 2]: {feature_values[int(n / 2)]}")
+    print(f"feature_values[n - 1]: {feature_values[int(n - 1)]}")
+    print("---median3---")
     a, b, c = feature_values[0], feature_values[int(n / 2)], feature_values[int(n - 1)]
     if a < b:
         if b < c:
@@ -578,13 +581,14 @@ def median3(feature_values, n):
         return b
 
 
+
 def introsort(feature_values, samples, n, maxd):
-    # print("---introsort---")
-    # print(f"feature_values: {feature_values}")
-    # print(f"samples: {samples}")
-    # print(f"n: {n}")
-    # print(f"maxd: {maxd}")
-    # print("---introsort---")
+    print("---introsort---")
+    print(f"feature_values: {feature_values}")
+    print(f"samples: {samples}")
+    print(f"n: {n}")
+    print(f"maxd: {maxd}")
+    print("---introsort---")
     while n > 1:
         if maxd <= 0:  # max depth limit exceeded ("gone quadratic")
             # Implement or import heapsort function
@@ -1477,7 +1481,7 @@ def extract_nnz_binary_search(
     end_negative: int,
     start_positive: int,
     sorted_samples: list,
-    is_samples_sorted: int,
+    is_samples_sorted: bool,
 ):
     """
     Extract and partition values for a given feature using binary search.

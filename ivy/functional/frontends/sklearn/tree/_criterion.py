@@ -311,7 +311,7 @@ class ClassificationCriterion(Criterion):
         w = 1.0
 
         for k in range(self.n_outputs):
-            self.sum_total[k, 0 : int(self.n_classes[k]) * 8] = 0
+            self.sum_total[k] = 0
 
         for p in range(start, end):
             # print(f"{p=}")
@@ -346,11 +346,12 @@ class ClassificationCriterion(Criterion):
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
-        print(f"init_missing: {n_missing=}")
+        #print(f"init_missing: {n_missing=}")
         #input()
         i = 0
         p = 0
         k = 0
+        y_ik = 0
         c = 0
         w = 1.0
 
@@ -580,7 +581,10 @@ class Gini(ClassificationCriterion):
             sq_count_left = 0.0
             sq_count_right = 0.0
 
-            for c in range(self.n_classes[k]):
+            #TODO: check if the following implementation is correct, added print
+            print(f"self.n_classes: {self.n_classes}")
+            #TODO: I added the following int because I was getting the TypeError: 'Array' object cannot be interpreted as an integer
+            for c in range(int(self.n_classes[k])):
                 count_k = self.sum_left[k, c]
                 sq_count_left += count_k * count_k
 
@@ -603,7 +607,7 @@ class Gini(ClassificationCriterion):
 # --- Helpers --- #
 # --------------- #
 
-
+#TODO: discuss this with illia, ptr allocations. Are these needed? do we need to allocate memory here
 def _move_sums_classification(
     criterion, sum_1, sum_2, weighted_n_1, weighted_n_2, put_missing_in_1
 ):
@@ -620,9 +624,11 @@ def _move_sums_classification(
         sum_2 = sum_total
     """
     # if criterion.n_missing != 0 and put_missing_in_1:
-    if put_missing_in_1:
+    #TODO: added the following 
+    #if put_missing_in_1:
+    if False:
         for k in range(criterion.n_outputs):
-            n_bytes = criterion.n_classes[k] * 8
+            n_bytes = criterion.n_classes[k] 
             sum_1[k, 0:n_bytes] = criterion.sum_missing[k, 0:n_bytes]
 
         for k in range(criterion.n_outputs):
@@ -634,7 +640,7 @@ def _move_sums_classification(
     else:
         # Assigning sum_2 = sum_total for all outputs.
         for k in range(criterion.n_outputs):
-            n_bytes = int(criterion.n_classes[k]) * 8
+            n_bytes = int(criterion.n_classes[k])
             sum_1[k, 0:n_bytes] = 0
             sum_2[k, 0:n_bytes] = criterion.sum_total[k, 0:n_bytes]
 

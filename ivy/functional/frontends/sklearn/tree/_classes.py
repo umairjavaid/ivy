@@ -299,6 +299,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             y_encoded = ivy.zeros(y.shape, dtype=int)
             for k in range(self.n_outputs_):
+                #TODO: convert these to ivy
                 classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
@@ -308,10 +309,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 expanded_class_weight = compute_sample_weight(
                     self.class_weight, y_original
                 )
-
+            #TODO: convert these to ivy
             self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+            #TODO: convert these to ivy(this took a lot of time)
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         max_depth = (
@@ -366,7 +368,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
-
+        #TODO: THis caused an error
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
@@ -484,13 +486,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_leaf_nodes,
                 self.min_impurity_decrease,
             )
-
+        #TODO: THis caused an error
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-
+        #TODO: This is not implemented yet
         self._prune_tree()
 
         return self
