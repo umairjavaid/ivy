@@ -624,7 +624,7 @@ def _move_sums_classification(
         sum_2 = sum_total
     """
     # if criterion.n_missing != 0 and put_missing_in_1:
-    #TODO: added the following 
+    #TODO: added the following, wasnt running with GINI
     #if put_missing_in_1:
     if False:
         for k in range(criterion.n_outputs):
