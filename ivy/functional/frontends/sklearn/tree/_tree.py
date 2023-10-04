@@ -168,7 +168,10 @@ class Tree:
         print(f"self.value: {self.value}")
         print(f"self.value_stride: {self.value_stride}")
         print("---_resize_c---")
-        self.nodes = ivy.zeros(capacity, dtype="int32")
+        # self.nodes = ivy.zeros(capacity, dtype="int32")
+        # TODO: This could cause errors if we are trying to resize again. 
+        # The previous self.value values could get overwritten. Make sure to resize this 
+        # and copy the values of self.value
         self.value = ivy.zeros(capacity * self.value_stride.data, dtype="int32")
 
         # value memory is initialised to 0 to enable classifier argmax
