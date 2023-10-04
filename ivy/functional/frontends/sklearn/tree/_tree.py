@@ -84,19 +84,15 @@ class Tree:
 
     def __init__(self, n_features, n_classes, n_outputs):
         """Constructor."""
-        self.n_features = None
-        self.n_classes = None
-        self.n_outputs = None
-        self.max_n_classes = None
-        self.max_depth = None
-        self.node_count = None
-        self.capacity = None
+
+        self.max_depth = 0
+        self.node_count = 0
+        self.capacity = 0
         self.nodes = []  # replaced it with array since this array will contain nodes
         self.value = None
-        self.value_stride = None
+
 
         size_t_dtype = "int32"
-
         n_classes = _check_n_classes(n_classes, size_t_dtype)
 
         # Input/Output layout
@@ -110,19 +106,13 @@ class Tree:
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
-        # Inner structures
-        self.max_depth = 0
-        self.node_count = 0
-        self.capacity = 0
-        self.value = None
-        self.nodes = None
-
     def __del__(self):
         """Destructor."""
         # Free all inner structures
-        self.n_classes = None
-        self.value = None
-        self.nodes = None
+        # self.n_classes = None
+        # self.value = None
+        # self.nodes = None
+        raise NotImplementedError
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -153,7 +143,8 @@ class Tree:
         # if self._resize_c(capacity) != 0:
         #     # Acquire gil only if we need to raise
         #     raise MemoryError()
-        raise NotImplementedError
+        #raise NotImplementedError
+        self._resize_c(capacity)
 
     def _resize_c(self, capacity=float("inf")):
         """
@@ -162,30 +153,34 @@ class Tree:
         Returns -1 in case of failure to allocate memory (and raise
         MemoryError) or 0 otherwise.
         """
-        # if capacity == self.capacity and self.nodes is None:
-        #     return 0
+        if capacity == self.capacity and self.nodes is None:
+            return 0
 
-        # if capacity == INTPTR_MAX:
-        #     if self.capacity == 0:
-        #         capacity = 3
-        #     else:
-        #         capacity = 2 * self.capacity
+        if capacity == INTPTR_MAX:
+            if self.capacity == 0:
+                capacity = 3
+            else:
+                capacity = 2 * self.capacity
 
-        # self.nodes = ivy.zeros(capacity, dtype="int32")
-        # self.value = ivy.zeros(capacity * self.value_stride, dtype="int32")
+        print("---_resize_c---")
+        print(f"capacity: {capacity}")
+        print(f"self.nodes: {self.nodes}")
+        print(f"self.value: {self.value}")
+        print(f"self.value_stride: {self.value_stride}")
+        print("---_resize_c---")
+        self.nodes = ivy.zeros(capacity, dtype="int32")
+        self.value = ivy.zeros(capacity * self.value_stride.data, dtype="int32")
 
-        # # value memory is initialised to 0 to enable classifier argmax
+        # value memory is initialised to 0 to enable classifier argmax
         # if capacity > self.capacity:
         #     self.value[
         #         self.capacity * self.value_stride : capacity * self.value_stride
         #     ] = 0
 
-        # if capacity < self.node_count:
-        #     self.node_count = capacity
+        if capacity < self.node_count:
+            self.node_count = capacity
 
-        # self.capacity = capacity
-        # return 0
-        raise NotImplementedError
+        self.capacity = capacity
 
     def _add_node(
         self,
@@ -746,12 +741,12 @@ class DepthFirstTreeBuilder(TreeBuilder):
         init_capacity: int
 
         #removed tree resize, added node 
-        # if tree.max_depth <= 10:
-        #     init_capacity = int(2 ** (tree.max_depth + 1)) - 1
-        # else:
-        #     init_capacity = 2047
+        if tree.max_depth <= 10:
+            init_capacity = int(2 ** (tree.max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
 
-        # tree._resize(init_capacity)
+        tree._resize(init_capacity)
 
         # Parameters
         splitter = self.splitter
@@ -862,6 +857,9 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             # Store value for all nodes, to facilitate tree/model
             # inspection and interpretation
+            print(f"tree.value: {tree.value}")
+            print(f"node.id: {node_id}")
+            print(f"tree.value_stride: {tree.value_stride}")
             splitter.node_value(tree.value + node_id * tree.value_stride)
 
             if not is_leaf:
