@@ -106,13 +106,13 @@ class Tree:
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
-    def __del__(self):
-        """Destructor."""
-        # Free all inner structures
-        # self.n_classes = None
-        # self.value = None
-        # self.nodes = None
-        raise NotImplementedError
+    # def __del__(self):
+    #     """Destructor."""
+    #     # Free all inner structures
+    #     # self.n_classes = None
+    #     # self.value = None
+    #     # self.nodes = None
+    #     raise NotImplementedError
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""

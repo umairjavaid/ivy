@@ -498,9 +498,15 @@ class ClassificationCriterion(Criterion):
         dest : double pointer
             The memory address which we will save the node value into.
         """
+        print("---node_value---")
+        print(f"dest: {dest}")
+        print(f"self.n_outputs: {self.n_outputs}")
+        print(f"self.sum_total: {self.sum_total}")
+        print(f"self.n_classes: {self.n_classes}")
+        print("---node_value---")
+        #TODO: THIS IS NOT THE CORRECT IMPLEMENTATION. CORRECT THIS
         for k in range(self.n_outputs):
-            dest[: self.n_classes[k] * 8] = self.sum_total[k, 0 : self.n_classes[k] * 8]
-            dest += self.max_n_classes
+            dest[k] = self.sum_total[k, 0].copy()
 
         return dest
 
@@ -623,6 +629,9 @@ def _move_sums_classification(
         sum_1 = 0
         sum_2 = sum_total
     """
+    print("---_move_sums_classification---")
+    print("forced an if condition. Fix this according to the original implementation")
+    print("---_move_sums_classification---")
     # if criterion.n_missing != 0 and put_missing_in_1:
     #TODO: added the following, wasnt running with GINI
     #if put_missing_in_1:
