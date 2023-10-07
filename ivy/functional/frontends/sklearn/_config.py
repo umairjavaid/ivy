@@ -341,6 +341,11 @@ def config_context(
     ...
     ValueError: Input contains NaN...
     """
+    print("---_config.py---")
+    print("---_config_context---")
+    print("do we need config context in our implementation")
+    print("---_config_context---")
+    print("---_config.py---")
     old_config = get_config()
     set_config(
         assume_finite=assume_finite,

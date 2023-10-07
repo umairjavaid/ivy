@@ -783,6 +783,9 @@ def _fit_context(*, prefer_skip_nested_validation):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
+            #TODO: remove print statements
+            print("---base.py---")
+            print("---wrapper---")
             global_skip_validation = get_config()["skip_parameter_validation"]
 
             # we don't want to validate again for each call to partial_fit
@@ -798,8 +801,12 @@ def _fit_context(*, prefer_skip_nested_validation):
                     prefer_skip_nested_validation or global_skip_validation
                 )
             ):
+                #print(f"estimator: {estimator}")
+                #print(f"args: {args}")
+                #print(f"kwargs: {kwargs}")
                 return fit_method(estimator, *args, **kwargs)
-
+        print("---wrapper---")
+        print("---base.py---")
         return wrapper
 
     return decorator

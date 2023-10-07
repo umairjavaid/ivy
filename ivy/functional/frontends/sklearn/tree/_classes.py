@@ -233,6 +233,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_input=True,
         missing_values_in_feature_mask=None,
     ):
+        print("---_classes.py---")
+        print("---_fit---")
         random_state = check_random_state(self.random_state)
 
         if check_input:
@@ -311,7 +313,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             #TODO: convert these to ivy
             self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
-
+        #TODO convert this to ivy contigious 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             #TODO: convert these to ivy(this took a lot of time)
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -368,7 +370,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
-        #TODO: THis caused an error
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
@@ -487,14 +488,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
         #TODO: THis caused an error
+        print(f"self.tree_: {self.tree_}")
+        print(f"sample_weight: {sample_weight}")
+        print(f"missing_values_in_feature_mask: {missing_values_in_feature_mask}")
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-        #TODO: This is not implemented yet
+        #TODO: This is not implemented yet. Why does this not throw an error!?!
         self._prune_tree()
-
+        print("---fit---")
+        print("---_classes.py---")
         return self
 
     def _validate_X_predict(self, X, check_input):

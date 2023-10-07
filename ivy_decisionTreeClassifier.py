@@ -3,8 +3,8 @@ import numpy as np
 from ivy.functional.frontends.sklearn.tree import DecisionTreeClassifier
 
 num_classes = 3
-X = np.random.rand(15, 5)
-y = np.random.randint(num_classes, size=15)
+X = np.random.rand(10, 5)
+y = np.random.randint(num_classes, size=10)
 # Train a scikit-learn DecisionTreeClassifier
 print("---sample_decisionTreeClassifier.py---")
 print(f"X: {X}")

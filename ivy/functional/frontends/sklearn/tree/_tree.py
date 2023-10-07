@@ -238,17 +238,21 @@ class Tree:
         return node_id
 
     def predict(self, X):
+        #TODO: remove print statements
+        print("---predict---")
         # Apply the model to the input data X
         predictions = self.apply(X)
         # Get the internal data as a NumPy array
-        internal_data = self._get_value_ndarray()
+        print(f"predictions: {predictions}")
+        out = self._get_value_ndarray() #.take(predictions, axis=0)
         # Use the predictions to index the internal data
-        out = internal_data[
-            predictions
-        ]  # not sure if this accurately translates to .take(self.apply(X), axis=0, mode='clip')
-        # Reshape the output if the model is single-output
-        if self.n_outputs == 1:
-            out = out.reshape(X.shape[0], self.max_n_classes)
+
+        print(f"out: {out}")
+        
+        #TODO: fix this according to the cython code. this is implemented in the original implemenetation
+        # if self.n_outputs == 1:
+        #     out = out.reshape(X.shape[0], self.max_n_classes)
+        print("---predict---")
         return out
 
     def apply(self, X):
@@ -259,13 +263,15 @@ class Tree:
             return self._apply_dense(X)
 
     def _apply_dense(self, X):
-        if not isinstance(X, ivy.data_classes.array.array.Array):
-            raise ValueError(
-                "X should be a ivy.data_classes.array.array.Array, got %s" % type(X)
-            )
+        #TODO: fix this type check. removed it ivy because we are passing numpy array here. This should also with ivy arrays
+        #
+        # if not isinstance(X, ivy.data_classes.array.array.Array):
+        #     raise ValueError(
+        #         "X should be a ivy.data_classes.array.array.Array, got %s" % type(X)
+        #     )
 
-        if X.dtype != "float32":
-            raise ValueError("X.dtype should be float32, got %s" % X.dtype)
+        # if X.dtype != "float32":
+        #     raise ValueError("X.dtype should be float32, got %s" % X.dtype)
 
         X_tensor = X
         n_samples = X.shape[0]
@@ -273,6 +279,8 @@ class Tree:
 
         for i in range(n_samples):
             node = self.nodes[0]  # Start at the root node
+
+            #TODO find out why during debugging the node.feature is a negative vlaue, node.left_child, node.right_child, threshold are also negative
 
             while node.left_child != _TREE_LEAF:
                 X_i_node_feature = X_tensor[i, node.feature]
@@ -286,7 +294,7 @@ class Tree:
                     node = self.nodes[node.left_child]
                 else:
                     node = self.nodes[node.right_child]
-
+            #TODO Root node is considered a leaf node that's it keeps returning zeros. Find out why root node is always a leaf node 
             out[i] = self.nodes.index(node)  # Get the index of the terminal node
 
         return out
@@ -908,6 +916,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
 
 def _check_n_classes(n_classes, expected_dtype):
+    #TODO fix this error: AttributeError: 'list' object has no attribute 'ndim'
     if n_classes.ndim != 1:
         raise ValueError(
             "Wrong dimensions for n_classes from the pickle: "
