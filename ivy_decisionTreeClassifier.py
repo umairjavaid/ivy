@@ -18,7 +18,7 @@ clf.fit(X, y)
 
 # Measure inference time without Hummingbird
 # start_time = time.time()
-#y_pred_sklearn = clf.predict(X)
+y_pred_sklearn = clf.predict(X)
 
 # end_time = time.time()
 # sklearn_inference_time = end_time - start_time
