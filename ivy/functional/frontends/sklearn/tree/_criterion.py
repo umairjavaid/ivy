@@ -529,7 +529,7 @@ class Gini(ClassificationCriterion):
         index = \sum_{k=0}^{K-1} count_k (1 - count_k)
               = 1 - \sum_{k=0}^{K-1} count_k ** 2
     """
-
+    #TODO: can we do this with a simple matrix multiplication?
     def node_impurity(self):
         """
         Evaluate the impurity of the current node.
