@@ -795,7 +795,7 @@ def _fit_context(*, prefer_skip_nested_validation):
 
             if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
-
+            #TODO This makes a generator function. Is it being used or not. It it needed or not
             with config_context(
                 skip_parameter_validation=(
                     prefer_skip_nested_validation or global_skip_validation

@@ -209,13 +209,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
             return None
-
+        #TODO: replace np with ivy
+        #TODO: np.errstate will not work here. 
         with np.errstate(over="ignore"):
             X = ivy.array(X, dtype=DTYPE)
             overall_sum = ivy.sum(X)
 
         if not ivy.isfinite(overall_sum):
             # Raise a ValueError in case of the presence of an infinite element.
+            #TODO: this is not called so we can't tell if it is implemented correctly or not
             _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
 
         # If the sum is not nan, then there are no missing values
