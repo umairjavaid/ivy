@@ -172,6 +172,7 @@ class Tree:
         # TODO: This could cause errors if we are trying to resize again. 
         # The previous self.value values could get overwritten. Make sure to resize this 
         # and copy the values of self.value
+        # TODO: check how often this functions gets called
         self.value = ivy.zeros(capacity * self.value_stride.data, dtype="int32")
 
         # value memory is initialised to 0 to enable classifier argmax
@@ -751,13 +752,19 @@ class DepthFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         init_capacity: int
 
+        #TODO: check why tree.max_depth is 0 
+
         #removed tree resize, added node 
         if tree.max_depth <= 10:
             init_capacity = int(2 ** (tree.max_depth + 1)) - 1
         else:
             init_capacity = 2047
 
+        #TODO: check why init_capacity is 1
+
         tree._resize(init_capacity)
+
+        #TODO: at this point in debugging the X and y are both numpy arrays. convert those to ivy
 
         # Parameters
         splitter = self.splitter
@@ -903,12 +910,11 @@ class DepthFirstTreeBuilder(TreeBuilder):
             if depth > max_depth_seen:
                 max_depth_seen = depth
 
-        #resize is not needed because we are in python, it allocates space dynamically
-        # if rc >= 0:
-        #     rc = tree._resize_c(tree.node_count)
+        if rc >= 0:
+            rc = tree._resize_c(tree.node_count)
 
-        # if rc == -1:
-        #     raise MemoryError()
+        if rc == -1:
+            raise MemoryError()
 
 
 # --- Helpers --- #
