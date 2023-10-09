@@ -12,7 +12,7 @@ IS_FIRST = 1
 IS_LEFT = 1
 IS_NOT_FIRST = 0
 IS_NOT_LEFT = 0
-
+INTPTR_MAX = ivy.iinfo(ivy.int32).max
 
 class Node:
     def __init__(self):
@@ -91,10 +91,6 @@ class Tree:
         self.nodes = []  # replaced it with array since this array will contain nodes
         self.value = None
 
-
-        size_t_dtype = "int32"
-        n_classes = _check_n_classes(n_classes, size_t_dtype)
-
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
@@ -146,14 +142,14 @@ class Tree:
         #raise NotImplementedError
         self._resize_c(capacity)
 
-    def _resize_c(self, capacity=float("inf")):
+    def _resize_c(self, capacity=INTPTR_MAX):
         """
         Guts of _resize.
 
         Returns -1 in case of failure to allocate memory (and raise
         MemoryError) or 0 otherwise.
         """
-        if capacity == self.capacity and self.nodes is None:
+        if capacity == self.capacity and self.nodes is not None:
             return 0
 
         if capacity == INTPTR_MAX:
@@ -172,8 +168,15 @@ class Tree:
         # TODO: This could cause errors if we are trying to resize again. 
         # The previous self.value values could get overwritten. Make sure to resize this 
         # and copy the values of self.value
-        self.value = ivy.zeros(capacity * self.value_stride.data, dtype="int32")
-
+        if self.value is None:
+            self.value = ivy.zeros((capacity, int(self.n_outputs), int(self.max_n_classes)), dtype="int32")
+        else:
+            print(capacity)
+            print(capacity-self.capacity)
+            print(type(capacity - self.capacity))
+            print(int(self.n_outputs))
+            print(int(self.max_n_classes))
+            self.value = ivy.concat([self.value, ivy.zeros((int(capacity - self.capacity), int(self.n_outputs), int(self.max_n_classes)), dtype="int32")])
         # value memory is initialised to 0 to enable classifier argmax
         # if capacity > self.capacity:
         #     self.value[
@@ -206,14 +209,15 @@ class Tree:
         """
         node_id = self.node_count
 
-        node = (
-            Node()
-        )  # self.nodes contains a list of nodes, it returns the node at node_id location
+        if node_id >= self.capacity:
+            self._resize_c()
 
-        self.nodes.append(node)
+        # node = self.nodes[node_id]
+        node = Node()
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
+        self.nodes.append(node)
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -748,10 +752,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
         # Check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
-        # Initial capacity
-        init_capacity: int
-
-        #removed tree resize, added node 
+        # removed tree resize, added node
         if tree.max_depth <= 10:
             init_capacity = int(2 ** (tree.max_depth + 1)) - 1
         else:
@@ -787,7 +788,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
         max_depth_seen = -1
         rc = 0
 
-        builder_stack: list[StackRecord] = []
+        builder_stack = []
         # stack_record = StackRecord()
 
         # Push root node onto stack
@@ -828,7 +829,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
             )
 
             if first:
-                #what does node impurity do?
+                # what does node impurity do?
                 impurity = splitter.node_impurity()
                 first = 0
 
@@ -837,8 +838,8 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             if not is_leaf:
                 # impurity is passed by value in the original code
-                #TODO: what does node_split do?
-                _, n_constant_features = splitter.node_split(
+                # TODO: what does node_split do?
+                _, n_constant_features, split = splitter.node_split(
                     impurity, split, n_constant_features
                 )
                 # If EPSILON=0 in the below comparison, float precision
@@ -849,7 +850,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
                     or split.pos >= end
                     or (split.improvement + EPSILON < min_impurity_decrease)
                 )
-            #TODO: What does _add_node do?
+            # TODO: What does _add_node do?
             node_id = tree._add_node(
                 parent,
                 is_left,
@@ -871,7 +872,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
             print(f"tree.value: {tree.value}")
             print(f"node.id: {node_id}")
             print(f"tree.value_stride: {tree.value_stride}")
-            splitter.node_value(tree.value + node_id * tree.value_stride)
+            tree.value = splitter.node_value(tree.value, node_id)
 
             if not is_leaf:
                 # Push right child on stack
@@ -902,7 +903,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             if depth > max_depth_seen:
                 max_depth_seen = depth
-
+                tree.max_depth = max_depth_seen
         #resize is not needed because we are in python, it allocates space dynamically
         # if rc >= 0:
         #     rc = tree._resize_c(tree.node_count)
@@ -938,7 +939,6 @@ def _check_n_classes(n_classes, expected_dtype):
 
 
 # Define constants
-INTPTR_MAX = ivy.iinfo(ivy.int32).max
 TREE_UNDEFINED = -2
 _TREE_UNDEFINED = TREE_UNDEFINED
 TREE_LEAF = -1

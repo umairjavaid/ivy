@@ -127,7 +127,7 @@ class Criterion:
         """
         return impurity_left, impurity_right
 
-    def node_value(self, dest):
+    def node_value(self, dest, node_id):
         """
         Placeholder for storing the node value.
 
@@ -236,7 +236,6 @@ class ClassificationCriterion(Criterion):
 
         self.n_classes = ivy.empty(n_outputs, dtype=ivy.int16)
 
-        k = 0
         max_n_classes = 0
 
         # For each target, set the number of unique classes in that target,
@@ -263,12 +262,12 @@ class ClassificationCriterion(Criterion):
 
     def init(
         self,
-        y: list,
-        sample_weight: list,
-        weighted_n_samples: float,
-        sample_indices: int,
-        start: int,
-        end: int,
+        y,
+        sample_weight,
+        weighted_n_samples,
+        sample_indices,
+        start,
+        end,
     ):
         """
         Initialize the criterion.
@@ -304,14 +303,12 @@ class ClassificationCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
-        i = 0
-        p = 0
-        k = 0
-        c = 0
         w = 1.0
 
+        # ToDo: fixed this
         for k in range(self.n_outputs):
-            self.sum_total[k] = 0
+            n_cls = ivy.to_scalar(self.n_classes[k])
+            self.sum_total[k, :n_cls] = 0
 
         for p in range(start, end):
             # print(f"{p=}")
@@ -346,20 +343,13 @@ class ClassificationCriterion(Criterion):
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
-        #print(f"init_missing: {n_missing=}")
-        #input()
-        i = 0
-        p = 0
-        k = 0
-        y_ik = 0
-        c = 0
         w = 1.0
 
         self.n_missing = n_missing
         if n_missing == 0:
             return
 
-        self.sum_missing[0, 0 : self.max_n_classes * self.n_outputs * 8] = 0
+        self.sum_missing[0:self.n_outputs, 0:self.max_n_classes] = 0
         self.weighted_n_missing = 0.0
 
         # The missing samples are assumed to be in self.sample_indices[-n_missing:]
@@ -382,7 +372,11 @@ class ClassificationCriterion(Criterion):
         MemoryError) or 0 otherwise.
         """
         self.pos = self.start
-        self.weighted_n_left, self.weighted_n_right = _move_sums_classification(
+        # print("Before(right): ", self.sum_right)
+        # print("Before(left): ", self.sum_left)
+        # print("Before(w right): ", self.weighted_n_right)
+        # print("Before(w left): ", self.weighted_n_left)
+        self.weighted_n_left, self.weighted_n_right, self.sum_right, self.sum_left = _move_sums_classification(
             self,
             self.sum_left,
             self.sum_right,
@@ -390,6 +384,10 @@ class ClassificationCriterion(Criterion):
             self.weighted_n_right,
             self.missing_go_to_left,
         )
+        # print("After(right): ", self.sum_right)
+        # print("After(left): ", self.sum_left)
+        # print("After(w right): ", self.weighted_n_right)
+        # print("After(w left): ", self.weighted_n_left)
         return 0
 
     def reverse_reset(self):
@@ -400,7 +398,7 @@ class ClassificationCriterion(Criterion):
         MemoryError) or 0 otherwise.
         """
         self.pos = self.end
-        self.weighted_n_right, self.weighted_n_left = _move_sums_classification(
+        self.weighted_n_right, self.weighted_n_left, self.sum_right, self.sum_left = _move_sums_classification(
             self,
             self.sum_right,
             self.sum_left,
@@ -432,10 +430,6 @@ class ClassificationCriterion(Criterion):
         sample_indices = self.sample_indices
         sample_weight = self.sample_weight
 
-        i = 0
-        p = 0
-        k = 0
-        c = 0
         w = 1.0
 
         # Update statistics up to new_pos
@@ -477,7 +471,8 @@ class ClassificationCriterion(Criterion):
         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
 
         for k in range(self.n_outputs):
-            for c in range(self.max_n_classes):
+            # ToDo: fixed this
+            for c in range(ivy.to_scalar(self.n_classes[k])):
                 self.sum_right[k, c] = self.sum_total[k, c] - self.sum_left[k, c]
 
         self.pos = new_pos
@@ -489,7 +484,7 @@ class ClassificationCriterion(Criterion):
     def children_impurity(self, impurity_left: float, impurity_right: float):
         pass
 
-    def node_value(self, dest):
+    def node_value(self, dest, node_id):
         """
         Compute the node value of sample_indices[start:end] and save it into dest.
 
@@ -505,11 +500,13 @@ class ClassificationCriterion(Criterion):
         print(f"self.n_classes: {self.n_classes}")
         print("---node_value---")
         #TODO: THIS IS NOT THE CORRECT IMPLEMENTATION. CORRECT THIS
+        print("Before: ", dest)
         for k in range(self.n_outputs):
-            dest[k] = self.sum_total[k, 0].copy()
-
+            n_cls = ivy.to_scalar(self.n_classes[k])
+            dest[node_id, k, :n_cls] = self.sum_total[k, :n_cls]
+            dest[node_id, k, :n_cls] += self.max_n_classes
+        print("After: ", dest)
         return dest
-
 
 
 class Gini(ClassificationCriterion):
@@ -539,10 +536,6 @@ class Gini(ClassificationCriterion):
         impurity the better.
         """
         gini = 0.0
-        sq_count = 0.0
-        count_k = 0.0
-        k = 0
-        c = 0
 
         for k in range(self.n_outputs):
             sq_count = 0.0
@@ -577,11 +570,6 @@ class Gini(ClassificationCriterion):
         """
         gini_left = 0.0
         gini_right = 0.0
-        sq_count_left = 0.0
-        sq_count_right = 0.0
-        count_k = 0.0
-        k = 0
-        c = 0
 
         for k in range(self.n_outputs):
             sq_count_left = 0.0
@@ -632,13 +620,9 @@ def _move_sums_classification(
     print("---_move_sums_classification---")
     print("forced an if condition. Fix this according to the original implementation")
     print("---_move_sums_classification---")
-    # if criterion.n_missing != 0 and put_missing_in_1:
-    #TODO: added the following, wasnt running with GINI
-    #if put_missing_in_1:
-    if False:
+    if hasattr(criterion, "n_missing") and criterion.n_missing != 0 and put_missing_in_1:
         for k in range(criterion.n_outputs):
-            n_bytes = criterion.n_classes[k] 
-            sum_1[k, 0:n_bytes] = criterion.sum_missing[k, 0:n_bytes]
+            sum_1[k, :criterion.n_classes[k]] = criterion.sum_missing[k, :criterion.n_classes[k]]
 
         for k in range(criterion.n_outputs):
             for c in range(criterion.n_classes[k]):
@@ -650,10 +634,10 @@ def _move_sums_classification(
         # Assigning sum_2 = sum_total for all outputs.
         for k in range(criterion.n_outputs):
             n_bytes = int(criterion.n_classes[k])
-            sum_1[k, 0:n_bytes] = 0
-            sum_2[k, 0:n_bytes] = criterion.sum_total[k, 0:n_bytes]
+            sum_1[k, :n_bytes] = 0
+            sum_2[k, :n_bytes] = criterion.sum_total[k, :n_bytes]
 
         weighted_n_1 = 0.0
         weighted_n_2 = criterion.weighted_n_node_samples
 
-    return weighted_n_1, weighted_n_2
+    return weighted_n_1, weighted_n_2, sum_1, sum_2

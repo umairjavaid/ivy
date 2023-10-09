@@ -148,7 +148,6 @@ class Splitter:
         self.samples = ivy.empty(n_samples, dtype=ivy.int32)
         samples = self.samples
 
-        i = 0
         j = 0
         weighted_n_samples = 0.0
 
@@ -181,7 +180,7 @@ class Splitter:
             self.criterion.init_sum_missing()
         return 0
 
-    def node_reset(self, start: int, end: int, weighted_n_node_samples: float):
+    def node_reset(self, start, end, weighted_n_node_samples):
         """
         Reset splitter on node samples[start:end].
 
@@ -226,9 +225,9 @@ class Splitter:
         """
         pass
 
-    def node_value(self, dest: float):
+    def node_value(self, dest, node_id):
         """Copy the value of node samples[start:end] into dest."""
-        dest = self.criterion.node_value(dest)
+        dest = self.criterion.node_value(dest, node_id)
         return dest
 
     def node_impurity(self):
@@ -248,6 +247,8 @@ def shift_missing_values_to_left_if_required(best, samples, end):
             current_end = end - 1 - p
             samples[i], samples[current_end] = samples[current_end], samples[i]
         best.pos += best.n_missing
+
+    return best, samples
 
 
 def node_split_best(
@@ -306,7 +307,7 @@ def node_split_best(
     # n_total_constants = n_known_constants + n_found_constants
     n_total_constants = n_known_constants
 
-    _init_split(best_split, end)
+    best_split = _init_split(best_split, end)
 
     partitioner.init_node_split(start, end)
 
@@ -378,11 +379,8 @@ def node_split_best(
 
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
+        has_missing = n_missing != 0
         # if has_missing:
-        #     criterion.init_missing(
-        #         n_missing
-        #     )  #TODO: This needs to be called for Gini to have access to n_missing
-        #TODO fix the above, following line is temp
         criterion.init_missing(n_missing)
         # Evaluate all splits
 
@@ -457,8 +455,8 @@ def node_split_best(
             missing_go_to_left = 0
 
             if not (
-                (criterion.weighted_n_left < min_samples_leaf)
-                or (criterion.weighted_n_right < min_samples_leaf)
+                (n_left < min_samples_leaf)
+                or (n_right < min_samples_leaf)
             ):
                 criterion.missing_go_to_left = missing_go_to_left
                 criterion.update(p)
@@ -504,31 +502,32 @@ def node_split_best(
             impurity, best_split.impurity_left, best_split.impurity_right
         )
 
-        shift_missing_values_to_left_if_required(best_split, samples, end)
+        best_split, samples = shift_missing_values_to_left_if_required(best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
     # and child nodes
-    features[0 : n_known_constants * 4] = constant_features[0 : n_known_constants * 4]
+    features[0:n_known_constants] = constant_features[0:n_known_constants]
     # Copy newly found constant features
-    constant_features[n_known_constants : n_found_constants * 4] = features[
-        n_known_constants : n_found_constants * 4
+    constant_features[n_known_constants:n_found_constants] = features[
+        n_known_constants:n_found_constants
     ]
 
     # Return Values
     split = best_split
     n_constant_features = n_total_constants
-    return 0, n_constant_features
+    return 0, n_constant_features, split
+
 
 #TODO: Can we use ivy.sort here. IT is optimissed for GPU. Discuss with Illia
 # def sort(feature_values):
 #     return ivy.sort(feature_values)
 def sort(feature_values, samples, n):
     print("---sort---")
-    print(f"feature_values: {feature_values}")
-    print(f"samples: {samples}")
-    print(f"n: {n}")
-    print("---sort---")
+    # print(f"feature_values: {feature_values}")
+    # print(f"samples: {samples}")
+    # print(f"n: {n}")
+    # print("---sort---")
     # if n == 0:
     #     return
     # maxd = 2 * int(ivy.log(n))
@@ -536,7 +535,8 @@ def sort(feature_values, samples, n):
     # return feature_values, samples
 
     #TODO: Experimental. trying sort
-    return ivy.sort(feature_values), samples
+    idx = ivy.argsort(feature_values)
+    return feature_values[idx], samples[idx]
 
 
 def swap(feature_values, samples, i, j):
@@ -717,7 +717,7 @@ def node_split_random(
     min_feature_value = 0
     max_feature_value = 0
 
-    _init_split(best_split, end)
+    best_split = _init_split(best_split, end)
 
     partitioner.init_node_split(start, end)
 
@@ -880,23 +880,23 @@ class DensePartitioner:
 
     def __init__(
         self,
-        X: list,
-        samples: list,
-        feature_values: list,
-        missing_values_in_feature_mask: list,
+        X,
+        samples,
+        feature_values,
+        missing_values_in_feature_mask,
     ):
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
 
-    def init_node_split(self, start: int, end: int):
+    def init_node_split(self, start, end):
         """Initialize splitter at the beginning of node_split."""
         self.start = start
         self.end = end
         self.n_missing = 0
 
-    def sort_samples_and_feature_values(self, current_feature: int):
+    def sort_samples_and_feature_values(self, current_feature):
         # print("---sort_samples_and_feature_values---")
         # print(f"current_feature: {current_feature}")
         # print("---sort_samples_and_feature_values---")
@@ -947,9 +947,9 @@ class DensePartitioner:
             for i in range(self.start, self.end):
                 feature_values[i] = X[int(samples[i]), int(current_feature)]
 
-        sort(
-            feature_values[self.start : self.end],
-            samples[self.start : self.end],
+        self.feature_values[self.start:self.end], self.samples[self.start:self.end] = sort(
+            feature_values[self.start:self.end],
+            samples[self.start:self.end],
             self.end - self.start - n_missing,
         )
         self.n_missing = n_missing
@@ -1077,6 +1077,11 @@ class DensePartitioner:
         else:
             # Partitioning routine when there are no missing values
             while p < partition_end:
+                print(p)
+                print(samples[p])
+                print(best_feature)
+                print(X[samples[p], best_feature])
+                print(best_threshold)
                 if X[samples[p], best_feature] <= best_threshold:
                     p += 1
                 else:
@@ -1085,6 +1090,7 @@ class DensePartitioner:
                         samples[p],
                     )
                     partition_end -= 1
+        self.samples = samples
 
 
 class SparsePartitioner:
@@ -1395,6 +1401,7 @@ def _init_split(split_record, start_pos):
     split_record.improvement = -INFINITY
     split_record.missing_go_to_left = False
     split_record.n_missing = 0
+    return split_record
 
 
 def binary_search(
