@@ -60,7 +60,7 @@ class Executor(ivy.Module, object):
         assert len(self._input_names) == len(inputs)
         inputs = [*inputs]
         variable_map = {}
-        device = get_device(self)
+        #device = get_device(self)
 
         # Maps data inputs to the expected variables.
         for i, input_name in enumerate(self._input_names):

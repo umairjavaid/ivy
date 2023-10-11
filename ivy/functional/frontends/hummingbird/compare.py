@@ -23,6 +23,8 @@ y_pred_sklearn = clf.predict(X_test)
 end_time = time.time()
 sklearn_inference_time = end_time - start_time
 
+print(f"y_pred_sklearn: #{y_pred_sklearn}")
+
 # Convert the scikit-learn model to a Hummingbird format
 hb_model = ml.convert(clf, 'ivy')
 
@@ -32,13 +34,15 @@ y_pred_hb = hb_model.predict(X_test)
 end_time = time.time()
 hb_inference_time = end_time - start_time
 
+print(f"y_pred_hb: {y_pred_hb}")
+
 # Evaluate the model
-from sklearn.metrics import accuracy_score
-accuracy_sklearn = accuracy_score(y_test, y_pred_sklearn)
-accuracy_hb = accuracy_score(y_test, y_pred_hb)
+#from sklearn.metrics import accuracy_score
+# accuracy_sklearn = accuracy_score(y_test, y_pred_sklearn)
+# accuracy_hb = accuracy_score(y_test, y_pred_hb)
 
-print(f"Scikit-learn Inference Time: {sklearn_inference_time} seconds")
-print(f"Hummingbird Inference Time: {hb_inference_time} seconds")
+# print(f"Scikit-learn Inference Time: {sklearn_inference_time} seconds")
+# print(f"Hummingbird Inference Time: {hb_inference_time} seconds")
 
-print(f"Scikit-learn Accuracy: {accuracy_sklearn}")
-print(f"Hummingbird Accuracy: {accuracy_hb}")
+# print(f"Scikit-learn Accuracy: {accuracy_sklearn}")
+# print(f"Hummingbird Accuracy: {accuracy_hb}")
