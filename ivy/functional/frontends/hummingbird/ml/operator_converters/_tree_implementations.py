@@ -193,23 +193,23 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
         #x = x.view(self.n_trees, self.hidden_one_size, -1)
         x = x.reshape((self.n_trees, self.hidden_one_size, -1))
         # x = x.float()
-        x = x.astype("float32")
+        #x = x.astype("float32")
 
         #x = torch.matmul(self.weight_2, x)
         x = ivy.matmul(self.weight_2, x)
 
-        x = x.view(self.n_trees * self.hidden_two_size, -1) == self.bias_2
-        x = x.view(self.n_trees, self.hidden_two_size, -1)
-        if self.tree_op_precision_dtype == "float32":
-            #x = x.float()
-            x = ivy.astype("float32")
-        else:
-            #x = x.double()
-            x = ivy.astype("float32")
+        x = x.reshape((self.n_trees * self.hidden_two_size, -1)) == self.bias_2
+        x = x.reshape((self.n_trees, self.hidden_two_size, -1))
+        # if self.tree_op_precision_dtype == "float32":
+        #     #x = x.float()
+        #     x = ivy.astype("float32")
+        # else:
+        #     #x = x.double()
+        #     x = ivy.astype("float32")
 
         #x = torch.matmul(self.weight_3, x)
         x = ivy.matmul(self.weight_3, x)
-        x = x.view(self.n_trees, self.hidden_three_size, -1)
+        x = x.reshape((self.n_trees, self.hidden_three_size, -1))
 
         x = self.aggregation(x)
 
@@ -219,14 +219,14 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
         if self.anomaly_detection:
             # Select the class (-1 if negative) and return the score.
             #return torch.where(x.view(-1) < 0, self.classes[0], self.classes[1]), x
-            return ivy.where(x.view(-1) < 0, self.classes[0], self.classes[1]), x
+            return ivy.where(x.reshape((-1)) < 0, self.classes[0], self.classes[1]), x
 
         if self.perform_class_select:
             #return torch.index_select(self.classes, 0, torch.argmax(x, dim=1)), x
-            return ivy.gather(self.classes, ivy.argmax(x, dim=1), axis=0), x
+            return ivy.gather(self.classes, ivy.argmax(x, axis=1), axis=0), x
         else:
             #return torch.argmax(x, dim=1), x
-            return ivy.argmax(x, dim=1), x
+            return ivy.argmax(x, axis=1), x
 
 
 # class TreeTraversalTreeImpl(AbstractPyTorchTreeImpl):
@@ -496,7 +496,7 @@ class GEMMDecisionTreeImpl(GEMMTreeImpl):
 
     def aggregation(self, x):
         #output = x.sum(0).t()
-        output = x.sum(0).T()
+        output = ivy.matrix_transpose(ivy.sum(x, axis=0))
 
         return output
 
