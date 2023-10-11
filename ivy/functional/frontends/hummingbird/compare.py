@@ -10,12 +10,6 @@ from sklearn.tree import DecisionTreeClassifier
 data = load_iris()
 X, y = data.data, data.target
 
-
-# Create a larger dataset by repeating the original data
-n_repeats = 1000  # Increase this value to make the dataset larger
-X = np.tile(X, (n_repeats, 1))
-y = np.tile(y, n_repeats)
-
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

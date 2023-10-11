@@ -185,10 +185,13 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
 
     def _forward(self, x):
         #x = x.t()
-        x = x.T()
+        #TODO: see the difference between .T() and matrix_transpose
+        #x = x.T()
+        x = ivy.matrix_transpose(x)
         #x = self.decision_cond(torch.mm(self.weight_1, x), self.bias_1)
         x = self.decision_cond(ivy.matmul(self.weight_1, x), self.bias_1)
-        x = x.view(self.n_trees, self.hidden_one_size, -1)
+        #x = x.view(self.n_trees, self.hidden_one_size, -1)
+        x = x.reshape((self.n_trees, self.hidden_one_size, -1))
         # x = x.float()
         x = x.astype("float32")
 

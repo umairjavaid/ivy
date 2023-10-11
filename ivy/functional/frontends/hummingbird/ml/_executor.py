@@ -82,8 +82,9 @@ class Executor(ivy.Module, object):
             if input_.dtype == "float64":
                 # We convert double precision arrays into single precision. Sklearn does the same.
                 input_ = input_.astype("float32")
-            if device is not None and device.type != "cpu":
-                input_ = input_.to_device(device)
+            #TODO: fix the device issue
+            # if device is not None and device.type != "cpu":
+            #     input_ = input_.to_device(device)
             variable_map[input_name] = input_
 
         # Evaluate all the operators in the topology by properly wiring inputs \ outputs

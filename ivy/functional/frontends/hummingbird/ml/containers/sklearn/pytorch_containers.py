@@ -36,7 +36,7 @@ class PyTorchSklearnContainerRegression(SklearnContainerRegression, PyTorchSklea
         elif self._is_anomaly_detection:
             return self.model.forward(*inputs)[0].cpu().numpy().ravel()
         else:
-            return self.model.forward(*inputs)[0].cpu().numpy().ravel()
+            return self.model._forward(*inputs)[0][0].cpu().numpy().ravel()
         
 class PyTorchSklearnContainerClassification(SklearnContainerClassification, PyTorchSklearnContainerRegression):
     """
