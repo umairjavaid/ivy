@@ -1,5 +1,6 @@
 from ._criterion import Criterion
 import ivy
+import numpy as np
 
 from ._utils import rand_int
 from ._utils import RAND_R_MAX
@@ -338,7 +339,7 @@ def node_split_best(
         #   and aren't constant.
 
         # Draw a feature at random
-        f_j = rand_int(n_drawn_constants, f_i - n_found_constants, random_state)
+        f_j = np.random.randint(n_drawn_constants, f_i - n_found_constants)
 
         if f_j < n_known_constants:
             features[n_drawn_constants], features[f_j] = (
@@ -353,7 +354,6 @@ def node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-        #TODO: This causes the issues. Rectify this first with Illia
         partitioner.sort_samples_and_feature_values(current_split.feature)
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
@@ -380,7 +380,6 @@ def node_split_best(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        # if has_missing:
         criterion.init_missing(n_missing)
         # Evaluate all splits
 
@@ -445,7 +444,7 @@ def node_split_best(
                     else:
                         current_split.missing_go_to_left = missing_go_to_left
 
-                    best_split = current_split
+                    best_split = SplitRecord(**current_split.__dict__)
 
         # Evaluate when there are missing values and all missing values goes
         # to the right node and non-missing values goes to the left node.
@@ -519,22 +518,7 @@ def node_split_best(
     return 0, n_constant_features, split
 
 
-#TODO: Can we use ivy.sort here. IT is optimissed for GPU. Discuss with Illia
-# def sort(feature_values):
-#     return ivy.sort(feature_values)
 def sort(feature_values, samples, n):
-    print("---sort---")
-    # print(f"feature_values: {feature_values}")
-    # print(f"samples: {samples}")
-    # print(f"n: {n}")
-    # print("---sort---")
-    # if n == 0:
-    #     return
-    # maxd = 2 * int(ivy.log(n))
-    # introsort(feature_values, samples, n, maxd)
-    # return feature_values, samples
-
-    #TODO: Experimental. trying sort
     idx = ivy.argsort(feature_values)
     return feature_values[idx], samples[idx]
 
@@ -579,7 +563,6 @@ def median3(feature_values, n):
             return c
     else:
         return b
-
 
 
 def introsort(feature_values, samples, n, maxd):
@@ -897,9 +880,6 @@ class DensePartitioner:
         self.n_missing = 0
 
     def sort_samples_and_feature_values(self, current_feature):
-        # print("---sort_samples_and_feature_values---")
-        # print(f"current_feature: {current_feature}")
-        # print("---sort_samples_and_feature_values---")
         """
         Simultaneously sort based on the feature_values.
 
@@ -1077,11 +1057,6 @@ class DensePartitioner:
         else:
             # Partitioning routine when there are no missing values
             while p < partition_end:
-                print(p)
-                print(samples[p])
-                print(best_feature)
-                print(X[samples[p], best_feature])
-                print(best_threshold)
                 if X[samples[p], best_feature] <= best_threshold:
                     p += 1
                 else:

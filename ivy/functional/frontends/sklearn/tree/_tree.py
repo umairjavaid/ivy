@@ -13,6 +13,10 @@ IS_LEFT = 1
 IS_NOT_FIRST = 0
 IS_NOT_LEFT = 0
 INTPTR_MAX = ivy.iinfo(ivy.int32).max
+TREE_UNDEFINED = -2
+_TREE_UNDEFINED = TREE_UNDEFINED
+TREE_LEAF = -1
+_TREE_LEAF = TREE_LEAF
 
 class Node:
     def __init__(self):
@@ -149,7 +153,7 @@ class Tree:
         Returns -1 in case of failure to allocate memory (and raise
         MemoryError) or 0 otherwise.
         """
-        if capacity == self.capacity and self.nodes is not None:
+        if capacity == self.capacity and len(self.nodes) != 0:
             return 0
 
         if capacity == INTPTR_MAX:
@@ -158,30 +162,12 @@ class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        print("---_resize_c---")
-        print(f"capacity: {capacity}")
-        print(f"self.nodes: {self.nodes}")
-        print(f"self.value: {self.value}")
-        print(f"self.value_stride: {self.value_stride}")
-        print("---_resize_c---")
-        # self.nodes = ivy.zeros(capacity, dtype="int32")
-        # TODO: This could cause errors if we are trying to resize again. 
         # The previous self.value values could get overwritten. Make sure to resize this 
         # and copy the values of self.value
         if self.value is None:
-            self.value = ivy.zeros((capacity, int(self.n_outputs), int(self.max_n_classes)), dtype="int32")
+            self.value = ivy.zeros((capacity, int(self.n_outputs), int(self.max_n_classes)), dtype=ivy.float32)
         else:
-            print(capacity)
-            print(capacity-self.capacity)
-            print(type(capacity - self.capacity))
-            print(int(self.n_outputs))
-            print(int(self.max_n_classes))
-            self.value = ivy.concat([self.value, ivy.zeros((int(capacity - self.capacity), int(self.n_outputs), int(self.max_n_classes)), dtype="int32")])
-        # value memory is initialised to 0 to enable classifier argmax
-        # if capacity > self.capacity:
-        #     self.value[
-        #         self.capacity * self.value_stride : capacity * self.value_stride
-        #     ] = 0
+            self.value = ivy.concat([self.value, ivy.zeros((int(capacity - self.capacity), int(self.n_outputs), int(self.max_n_classes)), dtype=ivy.float32)])
 
         if capacity < self.node_count:
             self.node_count = capacity
@@ -217,7 +203,6 @@ class Tree:
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
-        self.nodes.append(node)
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -237,26 +222,22 @@ class Tree:
             node.threshold = threshold
             node.missing_go_to_left = missing_go_to_left
 
+        self.nodes.append(node)
         self.node_count += 1
 
         return node_id
 
     def predict(self, X):
-        #TODO: remove print statements
-        print("---predict---")
         # Apply the model to the input data X
-        predictions = self.apply(X)
         # Get the internal data as a NumPy array
-        print(f"predictions: {predictions}")
-        out = self._get_value_ndarray() #.take(predictions, axis=0)
         # Use the predictions to index the internal data
+        X_applied = self.apply(X)
+        X_threshold = ivy.where(X_applied > X.shape[0], X.shape[0] - 1, X_applied)
+        out = ivy.gather(self.value, X_threshold, axis=0)
 
-        print(f"out: {out}")
-        
-        #TODO: fix this according to the cython code. this is implemented in the original implemenetation
-        # if self.n_outputs == 1:
-        #     out = out.reshape(X.shape[0], self.max_n_classes)
-        print("---predict---")
+        if self.n_outputs == 1:
+            out = out.reshape((X.shape[0], self.max_n_classes))
+
         return out
 
     def apply(self, X):
@@ -279,12 +260,10 @@ class Tree:
 
         X_tensor = X
         n_samples = X.shape[0]
-        out = ivy.zeros(n_samples, dtype="float32")
+        out = ivy.zeros(n_samples, dtype="int32")
 
         for i in range(n_samples):
             node = self.nodes[0]  # Start at the root node
-
-            #TODO find out why during debugging the node.feature is a negative vlaue, node.left_child, node.right_child, threshold are also negative
 
             while node.left_child != _TREE_LEAF:
                 X_i_node_feature = X_tensor[i, node.feature]
@@ -298,7 +277,7 @@ class Tree:
                     node = self.nodes[node.left_child]
                 else:
                     node = self.nodes[node.right_child]
-            #TODO Root node is considered a leaf node that's it keeps returning zeros. Find out why root node is always a leaf node 
+
             out[i] = self.nodes.index(node)  # Get the index of the terminal node
 
         return out
@@ -749,8 +728,8 @@ class DepthFirstTreeBuilder(TreeBuilder):
     ):
         """Build a decision tree from the training set (X, y)."""
 
-        # Check input
-        X, y, sample_weight = self._check_input(X, y, sample_weight)
+        # Check input(not needed at all)
+        # X, y, sample_weight = self._check_input(X, y, sample_weight)
 
         # removed tree resize, added node
         if tree.max_depth <= 10:
@@ -789,7 +768,6 @@ class DepthFirstTreeBuilder(TreeBuilder):
         rc = 0
 
         builder_stack = []
-        # stack_record = StackRecord()
 
         # Push root node onto stack
         builder_stack.append(
@@ -816,7 +794,6 @@ class DepthFirstTreeBuilder(TreeBuilder):
             n_constant_features = stack_record.n_constant_features
 
             n_node_samples = end - start
-            #TODO: what does node reset do?
             _, weighted_n_node_samples = splitter.node_reset(
                 start, end, weighted_n_node_samples
             )
@@ -829,7 +806,6 @@ class DepthFirstTreeBuilder(TreeBuilder):
             )
 
             if first:
-                # what does node impurity do?
                 impurity = splitter.node_impurity()
                 first = 0
 
@@ -838,7 +814,6 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             if not is_leaf:
                 # impurity is passed by value in the original code
-                # TODO: what does node_split do?
                 _, n_constant_features, split = splitter.node_split(
                     impurity, split, n_constant_features
                 )
@@ -850,7 +825,7 @@ class DepthFirstTreeBuilder(TreeBuilder):
                     or split.pos >= end
                     or (split.improvement + EPSILON < min_impurity_decrease)
                 )
-            # TODO: What does _add_node do?
+
             node_id = tree._add_node(
                 parent,
                 is_left,
@@ -869,9 +844,6 @@ class DepthFirstTreeBuilder(TreeBuilder):
 
             # Store value for all nodes, to facilitate tree/model
             # inspection and interpretation
-            print(f"tree.value: {tree.value}")
-            print(f"node.id: {node_id}")
-            print(f"tree.value_stride: {tree.value_stride}")
             tree.value = splitter.node_value(tree.value, node_id)
 
             if not is_leaf:
@@ -936,10 +908,3 @@ def _check_n_classes(n_classes, expected_dtype):
         f"- expected: {expected_dtype}\n"
         f"- got:      {n_classes.dtype}"
     )
-
-
-# Define constants
-TREE_UNDEFINED = -2
-_TREE_UNDEFINED = TREE_UNDEFINED
-TREE_LEAF = -1
-_TREE_LEAF = TREE_LEAF

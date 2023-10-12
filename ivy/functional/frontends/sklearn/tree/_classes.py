@@ -51,7 +51,7 @@ from ._tree import (
 #    BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
     Tree,
-#    _build_pruned_tree_ccp,
+   # _build_pruned_tree_ccp,
 #    ccp_pruning_path,
 )
 
@@ -235,8 +235,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_input=True,
         missing_values_in_feature_mask=None,
     ):
-        print("---_classes.py---")
-        print("---_fit---")
         random_state = check_random_state(self.random_state)
 
         if check_input:
@@ -301,7 +299,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.class_weight is not None:
                 y_original = ivy.copy.copy(y)
 
-            y_encoded = ivy.zeros(y.shape, dtype=int)
+            y_encoded = ivy.zeros(y.shape, dtype=ivy.int32)
+
             for k in range(self.n_outputs_):
                 #TODO: convert these to ivy
                 classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
@@ -489,19 +488,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_leaf_nodes,
                 self.min_impurity_decrease,
             )
-        #TODO: THis caused an error
-        print(f"self.tree_: {self.tree_}")
-        print(f"sample_weight: {sample_weight}")
-        print(f"missing_values_in_feature_mask: {missing_values_in_feature_mask}")
+
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-        #TODO: This is not implemented yet. Why does this not throw an error!?!
+
         self._prune_tree()
-        print("---fit---")
-        print("---_classes.py---")
+        # print("---fit---")
+        # print("---_classes.py---")
         return self
 
     def _validate_X_predict(self, X, check_input):
@@ -551,23 +547,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes, or the predict values.
         """
-        check_is_fitted(self)
-        X = self._validate_X_predict(X, check_input)
+        # check_is_fitted(self)
+        # X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
         # Classification
         if is_classifier(self):
             if self.n_outputs_ == 1:
-                return self.classes_.take(ivy.argmax(proba, axis=1), axis=0)
+                return ivy.gather(self.classes_, ivy.argmax(proba, axis=1), axis=0)
 
             else:
                 class_type = self.classes_[0].dtype
                 predictions = ivy.zeros((n_samples, self.n_outputs_), dtype=class_type)
                 for k in range(self.n_outputs_):
-                    predictions[:, k] = self.classes_[k].take(
-                        ivy.argmax(proba[:, k], axis=1), axis=0
-                    )
+                    predictions[:, k] = ivy.gather(self.classes_[k], ivy.argmax(proba[:, k], axis=1), axis=0)
 
                 return predictions
 

@@ -161,7 +161,7 @@ class Criterion:
         )
 
         return (
-            -self.weighted_n_right * impurity_right
+            - self.weighted_n_right * impurity_right
             - self.weighted_n_left * impurity_left
         )
 
@@ -198,8 +198,8 @@ class Criterion:
         """
         return (self.weighted_n_node_samples / self.weighted_n_samples) * (
             impurity_parent
-            - (self.weighted_n_right / self.weighted_n_node_samples) * impurity_right
-            - (self.weighted_n_left / self.weighted_n_node_samples) * impurity_left
+            - (self.weighted_n_right / self.weighted_n_node_samples * impurity_right)
+            - (self.weighted_n_left / self.weighted_n_node_samples * impurity_left)
         )
 
     def init_sum_missing(self):
@@ -305,13 +305,11 @@ class ClassificationCriterion(Criterion):
 
         w = 1.0
 
-        # ToDo: fixed this
         for k in range(self.n_outputs):
             n_cls = ivy.to_scalar(self.n_classes[k])
             self.sum_total[k, :n_cls] = 0
 
         for p in range(start, end):
-            # print(f"{p=}")
             i = sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
@@ -372,11 +370,7 @@ class ClassificationCriterion(Criterion):
         MemoryError) or 0 otherwise.
         """
         self.pos = self.start
-        # print("Before(right): ", self.sum_right)
-        # print("Before(left): ", self.sum_left)
-        # print("Before(w right): ", self.weighted_n_right)
-        # print("Before(w left): ", self.weighted_n_left)
-        self.weighted_n_left, self.weighted_n_right, self.sum_right, self.sum_left = _move_sums_classification(
+        self.weighted_n_left, self.weighted_n_right, self.sum_left, self.sum_right = _move_sums_classification(
             self,
             self.sum_left,
             self.sum_right,
@@ -384,10 +378,6 @@ class ClassificationCriterion(Criterion):
             self.weighted_n_right,
             self.missing_go_to_left,
         )
-        # print("After(right): ", self.sum_right)
-        # print("After(left): ", self.sum_left)
-        # print("After(w right): ", self.weighted_n_right)
-        # print("After(w left): ", self.weighted_n_left)
         return 0
 
     def reverse_reset(self):
@@ -471,7 +461,6 @@ class ClassificationCriterion(Criterion):
         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
 
         for k in range(self.n_outputs):
-            # ToDo: fixed this
             for c in range(ivy.to_scalar(self.n_classes[k])):
                 self.sum_right[k, c] = self.sum_total[k, c] - self.sum_left[k, c]
 
@@ -493,19 +482,10 @@ class ClassificationCriterion(Criterion):
         dest : double pointer
             The memory address which we will save the node value into.
         """
-        print("---node_value---")
-        print(f"dest: {dest}")
-        print(f"self.n_outputs: {self.n_outputs}")
-        print(f"self.sum_total: {self.sum_total}")
-        print(f"self.n_classes: {self.n_classes}")
-        print("---node_value---")
-        #TODO: THIS IS NOT THE CORRECT IMPLEMENTATION. CORRECT THIS
-        print("Before: ", dest)
         for k in range(self.n_outputs):
             n_cls = ivy.to_scalar(self.n_classes[k])
             dest[node_id, k, :n_cls] = self.sum_total[k, :n_cls]
-            dest[node_id, k, :n_cls] += self.max_n_classes
-        print("After: ", dest)
+
         return dest
 
 
@@ -526,7 +506,6 @@ class Gini(ClassificationCriterion):
         index = \sum_{k=0}^{K-1} count_k (1 - count_k)
               = 1 - \sum_{k=0}^{K-1} count_k ** 2
     """
-    #TODO: can we do this with a simple matrix multiplication?
     def node_impurity(self):
         """
         Evaluate the impurity of the current node.
@@ -575,9 +554,6 @@ class Gini(ClassificationCriterion):
             sq_count_left = 0.0
             sq_count_right = 0.0
 
-            #TODO: check if the following implementation is correct, added print
-            print(f"self.n_classes: {self.n_classes}")
-            #TODO: I added the following int because I was getting the TypeError: 'Array' object cannot be interpreted as an integer
             for c in range(int(self.n_classes[k])):
                 count_k = self.sum_left[k, c]
                 sq_count_left += count_k * count_k
@@ -601,7 +577,6 @@ class Gini(ClassificationCriterion):
 # --- Helpers --- #
 # --------------- #
 
-#TODO: discuss this with illia, ptr allocations. Are these needed? do we need to allocate memory here
 def _move_sums_classification(
     criterion, sum_1, sum_2, weighted_n_1, weighted_n_2, put_missing_in_1
 ):
@@ -617,9 +592,6 @@ def _move_sums_classification(
         sum_1 = 0
         sum_2 = sum_total
     """
-    print("---_move_sums_classification---")
-    print("forced an if condition. Fix this according to the original implementation")
-    print("---_move_sums_classification---")
     if hasattr(criterion, "n_missing") and criterion.n_missing != 0 and put_missing_in_1:
         for k in range(criterion.n_outputs):
             sum_1[k, :criterion.n_classes[k]] = criterion.sum_missing[k, :criterion.n_classes[k]]
