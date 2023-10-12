@@ -1,24 +1,26 @@
-#import time
+from sklearn.datasets import load_breast_cancer
+import ivy.functional.frontends.sklearn as sklearn_frontend
+from sklearn.tree import DecisionTreeClassifier
 import numpy as np
-from ivy.functional.frontends.sklearn.tree import DecisionTreeClassifier
+
+# uncomment this to test with real-life data and comment the below data generation procedure
+# X, y = load_breast_cancer(return_X_y=True)
+# X = X[40:60, :]
+# y = y[40:60]
 
 num_classes = 3
 X = np.random.rand(10, 5)
 y = np.random.randint(num_classes, size=10)
-# Train a scikit-learn DecisionTreeClassifier
-print("---sample_decisionTreeClassifier.py---")
-print(f"X: {X}")
-print(f"y: {y}")
-print("---sample_decisionTreeClassifier.py---")
-clf = DecisionTreeClassifier(max_depth=3)
-print("---sample_decisionTreeClassifier.py---")
-#print(f"clf: {clf}")
-print("---sample_decisionTreeClassifier.py---")
-clf.fit(X, y)
 
-# Measure inference time without Hummingbird
-# start_time = time.time()
-y_pred_sklearn = clf.predict(X)
 
-# end_time = time.time()
-# sklearn_inference_time = end_time - start_time
+sk_clf = DecisionTreeClassifier(max_depth=3)
+ivy_clf = sklearn_frontend.tree.DecisionTreeClassifier(max_depth=3)
+
+sk_clf.fit(X, y)
+ivy_clf.fit(X, y)
+
+sk_y = sk_clf.predict(X)
+ivy_y = ivy_clf.predict(X)
+
+print("ivy-based prediction: ", ivy_y)
+print("sklearn-based prediction: ", sk_y)
