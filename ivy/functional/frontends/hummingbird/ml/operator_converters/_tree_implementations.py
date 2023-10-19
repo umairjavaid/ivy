@@ -145,11 +145,11 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
             hidden_two_size = max(hidden_two_size, weight[1].shape[0])
 
         n_trees = len(tree_parameters)
-        weight_1 = np.zeros((n_trees, hidden_one_size, n_features))
-        bias_1 = np.zeros((n_trees, hidden_one_size), dtype=np.float64)
-        weight_2 = np.zeros((n_trees, hidden_two_size, hidden_one_size))
-        bias_2 = np.zeros((n_trees, hidden_two_size))
-        weight_3 = np.zeros((n_trees, hidden_three_size, hidden_two_size), dtype=np.float64)
+        weight_1 = ivy.zeros((n_trees, hidden_one_size, n_features), dtype="float32")
+        bias_1 = ivy.zeros((n_trees, hidden_one_size), dtype=self.tree_op_precision_dtype)
+        weight_2 = ivy.zeros((n_trees, hidden_two_size, hidden_one_size), dtype="float32")
+        bias_2 = ivy.zeros((n_trees, hidden_two_size), dtype="float32")
+        weight_3 = ivy.zeros((n_trees, hidden_three_size, hidden_two_size), dtype=self.tree_op_precision_dtype)
 
         for i, (weight, bias) in enumerate(tree_parameters):
             if len(weight[0]) > 0:
@@ -168,17 +168,22 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
         # self.weight_1 = torch.nn.Parameter(
         #     torch.from_numpy(weight_1.reshape(-1, self.n_features).astype("float32")).detach().clone()
         # )
-        self.weight_1 = ivy.array(ivy.asarray(weight_1.reshape(-1, self.n_features), dtype="float32"))
+        #self.weight_1 = ivy.array(ivy.asarray(weight_1.reshape(-1, self.n_features), dtype="float32"))
+        self.weight_1 = ivy.reshape(weight_1, (-1, self.n_features))
         # self.bias_1 = torch.nn.Parameter(
         #     torch.from_numpy(bias_1.reshape(-1, 1).astype(self.tree_op_precision_dtype)).detach().clone()
         # )
-        self.bias_1 = ivy.array(ivy.asarray(bias_1.reshape(-1, 1), dtype=self.tree_op_precision_dtype))
+        #self.bias_1 = ivy.array(ivy.asarray(bias_1.reshape(-1, 1), dtype=self.tree_op_precision_dtype))
+        self.bias_1 = ivy.reshape(bias_1, (-1, 1))
         #self.weight_2 = torch.nn.Parameter(torch.from_numpy(weight_2.astype("float32")).detach().clone())
-        self.weight_2 = ivy.array(ivy.asarray(weight_2), dtype="float32")
+        #self.weight_2 = ivy.array(ivy.asarray(weight_2), dtype="float32")
+        self.weight_2 = weight_2
         #self.bias_2 = torch.nn.Parameter(torch.from_numpy(bias_2.reshape(-1, 1).astype("float32")).detach().clone())
-        self.bias_2 = ivy.array(ivy.asarray(bias_2.reshape(-1, 1), dtype="float32"))
+        #self.bias_2 = ivy.array(ivy.asarray(bias_2.reshape(-1, 1), dtype="float32"))
+        self.bias_2 = ivy.reshape(bias_2, (-1, 1))
         #self.weight_3 = torch.nn.Parameter(torch.from_numpy(weight_3.astype(self.tree_op_precision_dtype)).detach().clone())
-        self.weight_3 = ivy.array(ivy.asarray(weight_3, dtype=self.tree_op_precision_dtype))
+        #self.weight_3 = ivy.array(ivy.asarray(weight_3, dtype=self.tree_op_precision_dtype))
+        self.weight_3 = weight_3
 
     def aggregation(self, x):
         return x
@@ -229,102 +234,102 @@ class GEMMTreeImpl(AbstractPyTorchTreeImpl):
             return ivy.argmax(x, axis=1), x
 
 
-# class TreeTraversalTreeImpl(AbstractPyTorchTreeImpl):
-#     """
-#     Class implementing the Tree Traversal strategy in PyTorch for tree-base models.
-#     """
+class TreeTraversalTreeImpl(AbstractPyTorchTreeImpl):
+    """
+    Class implementing the Tree Traversal strategy in PyTorch for tree-base models.
+    """
 
-#     def _expand_indexes(self, batch_size):
-#         indexes = self.nodes_offset
-#         indexes = indexes.expand(batch_size, self.num_trees)
-#         return indexes.reshape(-1)
+    def _expand_indexes(self, batch_size):
+        indexes = self.nodes_offset
+        indexes = indexes.expand(batch_size, self.num_trees)
+        return indexes.reshape(-1)
 
-#     def __init__(
-#         self, logical_operator, tree_parameters, max_depth, n_features, classes, n_classes=None, extra_config={}, **kwargs
-#     ):
-#         """
-#         Args:
-#             tree_parameters: The parameters defining the tree structure
-#             max_depth: The maximum tree-depth in the model
-#             n_features: The number of features input to the model
-#             classes: The classes used for classification. None if implementing a regression model
-#             n_classes: The total number of used classes
-#             extra_config: Extra configuration used to properly implement the source tree
-#         """
-#         # If n_classes is not provided we induce it from tree parameters. Multioutput regression targets are also treated as separate classes.
-#         n_classes = n_classes if n_classes is not None else tree_parameters[0][6].shape[1]
-#         super(TreeTraversalTreeImpl, self).__init__(
-#             logical_operator, tree_parameters, n_features, classes, n_classes, extra_config=extra_config, **kwargs
-#         )
+    def __init__(
+        self, logical_operator, tree_parameters, max_depth, n_features, classes, n_classes=None, extra_config={}, **kwargs
+    ):
+        """
+        Args:
+            tree_parameters: The parameters defining the tree structure
+            max_depth: The maximum tree-depth in the model
+            n_features: The number of features input to the model
+            classes: The classes used for classification. None if implementing a regression model
+            n_classes: The total number of used classes
+            extra_config: Extra configuration used to properly implement the source tree
+        """
+        # If n_classes is not provided we induce it from tree parameters. Multioutput regression targets are also treated as separate classes.
+        n_classes = n_classes if n_classes is not None else tree_parameters[0][6].shape[1]
+        super(TreeTraversalTreeImpl, self).__init__(
+            logical_operator, tree_parameters, n_features, classes, n_classes, extra_config=extra_config, **kwargs
+        )
 
-#         # Initialize the actual model.
-#         self.n_features = n_features
-#         self.max_tree_depth = max_depth
-#         self.num_trees = len(tree_parameters)
-#         self.num_nodes = max([len(tree_parameter[1]) for tree_parameter in tree_parameters])
+        # Initialize the actual model.
+        self.n_features = n_features
+        self.max_tree_depth = max_depth
+        self.num_trees = len(tree_parameters)
+        self.num_nodes = max([len(tree_parameter[1]) for tree_parameter in tree_parameters])
 
-#         lefts = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
-#         rights = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
+        lefts = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
+        rights = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
 
-#         features = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
-#         thresholds = np.zeros((self.num_trees, self.num_nodes), dtype=np.float64)
-#         values = np.zeros((self.num_trees, self.num_nodes, self.n_classes), dtype=np.float64)
+        features = np.zeros((self.num_trees, self.num_nodes), dtype=np.int64)
+        thresholds = np.zeros((self.num_trees, self.num_nodes), dtype=np.float64)
+        values = np.zeros((self.num_trees, self.num_nodes, self.n_classes), dtype=np.float64)
 
-#         for i in range(self.num_trees):
-#             lefts[i][: len(tree_parameters[i][0])] = tree_parameters[i][2]
-#             rights[i][: len(tree_parameters[i][0])] = tree_parameters[i][3]
-#             features[i][: len(tree_parameters[i][0])] = tree_parameters[i][4]
-#             thresholds[i][: len(tree_parameters[i][0])] = tree_parameters[i][5]
-#             values[i][: len(tree_parameters[i][0])][:] = tree_parameters[i][6]
+        for i in range(self.num_trees):
+            lefts[i][: len(tree_parameters[i][0])] = tree_parameters[i][2]
+            rights[i][: len(tree_parameters[i][0])] = tree_parameters[i][3]
+            features[i][: len(tree_parameters[i][0])] = tree_parameters[i][4]
+            thresholds[i][: len(tree_parameters[i][0])] = tree_parameters[i][5]
+            values[i][: len(tree_parameters[i][0])][:] = tree_parameters[i][6]
 
-#         self.lefts = torch.nn.Parameter(torch.from_numpy(lefts).view(-1).detach().clone(), requires_grad=False)
-#         self.rights = torch.nn.Parameter(torch.from_numpy(rights).view(-1).detach().clone(), requires_grad=False)
+        self.lefts = torch.nn.Parameter(torch.from_numpy(lefts).view(-1).detach().clone(), requires_grad=False)
+        self.rights = torch.nn.Parameter(torch.from_numpy(rights).view(-1).detach().clone(), requires_grad=False)
 
-#         self.features = torch.nn.Parameter(torch.from_numpy(features).view(-1).detach().clone(), requires_grad=False)
-#         self.thresholds = torch.nn.Parameter(
-#             torch.from_numpy(thresholds.astype(self.tree_op_precision_dtype)).view(-1).detach().clone()
-#         )
-#         self.values = torch.nn.Parameter(
-#             torch.from_numpy(values.astype(self.tree_op_precision_dtype)).view(-1, self.n_classes).detach().clone()
-#         )
+        self.features = torch.nn.Parameter(torch.from_numpy(features).view(-1).detach().clone(), requires_grad=False)
+        self.thresholds = torch.nn.Parameter(
+            torch.from_numpy(thresholds.astype(self.tree_op_precision_dtype)).view(-1).detach().clone()
+        )
+        self.values = torch.nn.Parameter(
+            torch.from_numpy(values.astype(self.tree_op_precision_dtype)).view(-1, self.n_classes).detach().clone()
+        )
 
-#         nodes_offset = [[i * self.num_nodes for i in range(self.num_trees)]]
-#         self.nodes_offset = torch.nn.Parameter(torch.LongTensor(nodes_offset), requires_grad=False)
+        nodes_offset = [[i * self.num_nodes for i in range(self.num_trees)]]
+        self.nodes_offset = torch.nn.Parameter(torch.LongTensor(nodes_offset), requires_grad=False)
 
-#     def aggregation(self, x):
-#         return x
+    def aggregation(self, x):
+        return x
 
-#     def forward(self, x):
-#         indexes = self._expand_indexes(x.size()[0])
+    def forward(self, x):
+        indexes = self._expand_indexes(x.size()[0])
 
-#         for _ in range(self.max_tree_depth):
-#             tree_nodes = indexes
-#             feature_nodes = torch.index_select(self.features, 0, tree_nodes).view(-1, self.num_trees)
-#             feature_values = torch.gather(x, 1, feature_nodes)
+        for _ in range(self.max_tree_depth):
+            tree_nodes = indexes
+            feature_nodes = torch.index_select(self.features, 0, tree_nodes).view(-1, self.num_trees)
+            feature_values = torch.gather(x, 1, feature_nodes)
 
-#             thresholds = torch.index_select(self.thresholds, 0, indexes).view(-1, self.num_trees)
-#             lefts = torch.index_select(self.lefts, 0, indexes).view(-1, self.num_trees)
-#             rights = torch.index_select(self.rights, 0, indexes).view(-1, self.num_trees)
+            thresholds = torch.index_select(self.thresholds, 0, indexes).view(-1, self.num_trees)
+            lefts = torch.index_select(self.lefts, 0, indexes).view(-1, self.num_trees)
+            rights = torch.index_select(self.rights, 0, indexes).view(-1, self.num_trees)
 
-#             indexes = torch.where(self.decision_cond(feature_values, thresholds), lefts, rights).long()
-#             indexes = indexes + self.nodes_offset
-#             indexes = indexes.view(-1)
+            indexes = torch.where(self.decision_cond(feature_values, thresholds), lefts, rights).long()
+            indexes = indexes + self.nodes_offset
+            indexes = indexes.view(-1)
 
-#         output = torch.index_select(self.values, 0, indexes).view(-1, self.num_trees, self.n_classes)
+        output = torch.index_select(self.values, 0, indexes).view(-1, self.num_trees, self.n_classes)
 
-#         output = self.aggregation(output)
+        output = self.aggregation(output)
 
-#         if self.regression:
-#             return output
+        if self.regression:
+            return output
 
-#         if self.anomaly_detection:
-#             # Select the class (-1 if negative) and return the score.
-#             return torch.where(output.view(-1) < 0, self.classes[0], self.classes[1]), output
+        if self.anomaly_detection:
+            # Select the class (-1 if negative) and return the score.
+            return torch.where(output.view(-1) < 0, self.classes[0], self.classes[1]), output
 
-#         if self.perform_class_select:
-#             return torch.index_select(self.classes, 0, torch.argmax(output, dim=1)), output
-#         else:
-#             return torch.argmax(output, dim=1), output
+        if self.perform_class_select:
+            return torch.index_select(self.classes, 0, torch.argmax(output, dim=1)), output
+        else:
+            return torch.argmax(output, dim=1), output
 
 
 # class PerfectTreeTraversalTreeImpl(AbstractPyTorchTreeImpl):
